@@ -8,6 +8,9 @@ module.exports = {
             sans: ["Source Sans Pro", ...fontFamily.sans],
         },
         extend: {
+            boxShadow: {
+                common: "var(--shadow)",
+            },
             colors: {
                 primary: "var(--primary)",
                 secondary: "var(--secondary)",

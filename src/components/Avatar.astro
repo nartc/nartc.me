@@ -1,0 +1,20 @@
+---
+import { Image } from "@astrojs/image/components";
+import avatar from "../../public/speak.png";
+---
+
+<div class="w-16 h-16 relative mb-4" role="img" aria-label="Avatar of the Chau">
+    <div
+        class="group w-full h-full rounded-full border-4 border-transparent text-center flex items-center relative avatar"
+        data-tooltip="New version available 🚀"
+    >
+        <Image
+            src={avatar}
+            alt="avatar of chau"
+            class="object-cover object-center rounded-full w-full h-full visible"
+            width={64}
+            height={64}
+            format="avif"
+        />
+    </div>
+</div>
