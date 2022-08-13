@@ -1,0 +1,35 @@
+---
+import BlogList from "../../components/BlogList.astro";
+import Layout from "../../layouts/Layout.astro";
+import type { Frontmatter } from "../../models/frontmatter";
+
+export async function getStaticPaths() {
+    const globs = await Astro.glob<Frontmatter>("../../blogs/*.md");
+    const tags = new Set<string>();
+
+    globs.forEach((glob) => {
+        glob.frontmatter.tags.forEach((tag) => {
+            tags.add(tag.toLowerCase());
+        });
+    });
+
+    return [...tags].map((tag) => ({
+        params: { tag },
+    }));
+}
+
+const globs = await Astro.glob<Frontmatter>("../../blogs/*.md");
+const { tag } = Astro.params as { tag: string };
+
+const blogsByTags = globs
+    .filter((glob) =>
+        glob.frontmatter.tags.some((frontmatterTag) =>
+            frontmatterTag.match(new RegExp(tag, "i"))
+        )
+    )
+    .map((glob) => glob.frontmatter);
+---
+
+<Layout title={tag + "| Chau Tran"}>
+    <BlogList blogs={blogsByTags} />
+</Layout>

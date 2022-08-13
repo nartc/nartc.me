@@ -1,9 +1,9 @@
 ---
-layout: "../../layouts/BlogLayout.astro"
 title: Cleaner Abstract Constructors in Angular 14
 description: Angular 14 comes with a subtle, yet powerful, change to the Dependency Injection system that might be a game-changer for many Angular developers
 publishedAt: 2022-05-17
 tags: ["Angular"]
+slug: inheritance-angular-inject
 ---
 
 When working with component-based frameworks, we tend to favor **Composition over Inheritance** because of the flexibility that **Composition** provides. This is especially _true_ in Angular due to **Dependency Injection** and how **Inheritance** in JavaScript works.

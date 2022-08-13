@@ -1,0 +1,297 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import type { Frontmatter } from "../../models/frontmatter";
+
+export async function getStaticPaths() {
+    const globs = await Astro.glob<Frontmatter>("../../blogs/*.md");
+    return globs.map((glob) => ({
+        params: {
+            slug: glob.frontmatter.slug,
+        },
+        props: {
+            frontmatter: glob.frontmatter,
+            post: glob,
+        },
+    }));
+}
+
+const { title, publishedAt, tags } = Astro.props.frontmatter as Frontmatter;
+const { Content } = Astro.props.post;
+---
+
+<Layout title={title + "| Chau Tran"} isBlog>
+    <a
+        class="home-link px-4 py-2 rounded-full inline-block border border-gray-300 cursor-pointer hover:text-primary transition-colors duration-200 ease-in-out lg:fixed lg:left-1"
+        href="/"
+    >
+        All Blogs
+    </a>
+    <h1 class="text-center text-4xl font-bold mb-6">{title}</h1>
+    <Content />
+    <h4 class="italic text-lg mt-4">
+        Published on {new Date(publishedAt).toDateString()}
+    </h4>
+    <hr />
+    <div class="flex flex-row items-center my-4">
+        {
+            tags.map((tag, index) => (
+                <a
+                    class:list={[
+                        "tag-link px-4 py-2 rounded-full border border-text text-center cursor-pointer transition-colors duration-200 ease-in-out hover:text-primary",
+                        { "ml-1": index !== 0 },
+                    ]}
+                    href={"/tag/" + tag.toLowerCase()}
+                >
+                    {tag}
+                </a>
+            ))
+        }
+    </div>
+    <hr />
+</Layout>
+
+<style is:global>
+    h1,
+    h2,
+    h3,
+    h4,
+    h5 {
+        @apply mb-2 mt-8;
+    }
+
+    strong {
+        @apply font-bold;
+    }
+
+    h6 {
+        @apply flex border-b border-solid border-gray-dark;
+    }
+
+    h6 > strong {
+        @apply font-thin text-sm px-2 py-1 mt-4;
+    }
+
+    h6 + pre {
+        @apply mt-0;
+    }
+
+    pre.astro-code {
+        @apply p-4;
+    }
+
+    a:not(.^-link) {
+        @apply text-primary underline cursor-pointer;
+    }
+
+    iframe {
+        @apply mt-4 mb-2 mx-auto max-w-full min-h-full;
+    }
+
+    iframe + p {
+        @apply text-center -mt-2;
+    }
+
+    iframe + p > em {
+        @apply text-sm;
+    }
+
+    blockquote {
+        @apply text-gray-medium my-4 py-1 px-2 border-l-4 border-gray-dark border-solid;
+    }
+
+    ol {
+        @apply list-decimal;
+    }
+
+    ul {
+        @apply list-disc;
+    }
+
+    ol,
+    ul {
+        @apply ml-8 my-4;
+    }
+
+    ol li:not(:last-of-type),
+    ul li:not(:last-of-type) {
+        @apply mb-2;
+    }
+
+    li,
+    p {
+        @apply font-thin leading-7 text-lg;
+    }
+
+    p {
+        @apply my-4;
+    }
+
+    p > img {
+        @apply mx-auto;
+    }
+
+    p > span > img {
+        @apply inline-block;
+    }
+
+    figure > img {
+        @apply mx-auto;
+    }
+
+    figure > figcaption {
+        @apply text-center;
+    }
+
+    figure > figcaption > p {
+        @apply mt-0 text-sm italic;
+    }
+
+    @screen md {
+        p > img {
+            max-width: 75%;
+        }
+    }
+
+    iframe {
+        @apply w-full min-h-128;
+    }
+
+    :not(pre) > code {
+        @apply text-secondary rounded font-thin break-words tracking-tighter;
+        padding: 0.1rem;
+    }
+
+    table {
+        @apply block w-full overflow-auto;
+        border-spacing: 0;
+        border-collapse: collapse;
+    }
+
+    table th {
+        @apply font-semibold;
+    }
+
+    table td,
+    table th {
+        @apply px-1.5 py-3.5 border border-solid border-gray-300;
+    }
+
+    table tr {
+        @apply border-t border-solid border-gray-400 transition-colors;
+        background-color: var(--background-color);
+    }
+
+    table tr:nth-child(2n) {
+        background-color: var(--table-even-row);
+    }
+
+    .utterances {
+        max-width: 100% !important;
+    }
+
+    --green: #4cd964;
+    --turquoise: #5ac8fa;
+    --blue: #007aff;
+    --light-blue: #7dc8e8;
+    --purple: #5856d6;
+    --red: #ff2d55;
+
+    .progress {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        padding: 0.25rem;
+        background: rgba(0, 0, 0, 0.25);
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25),
+            0 1px rgba(255, 255, 255, 0.08);
+    }
+
+    .progress .progress-bar3 {
+        height: 0.5rem;
+        border-radius: 0.25rem;
+        background-image: linear-gradient(
+            to right,
+            var(--green),
+            var(--turquoise),
+            var(--blue),
+            var(--light-blue),
+            var(--purple),
+            var(--red)
+        );
+        transition: 0.4s linear;
+        transition-property: width, background-color;
+    }
+
+    .progress-infinite .progress-bar3 {
+        width: 100%;
+        background-image: linear-gradient(
+            to right,
+            var(--green),
+            var(--turquoise),
+            var(--blue),
+            var(--light-blue),
+            var(--purple),
+            var(--red)
+        );
+        animation: colorAnimation 1s infinite;
+    }
+
+    @keyframes colorAnimation {
+        0% {
+            background-image: linear-gradient(
+                to right,
+                var(--green),
+                var(--turquoise),
+                var(--blue),
+                var(--light-blue),
+                var(--purple),
+                var(--red)
+            );
+        }
+        20% {
+            background-image: linear-gradient(
+                to right,
+                var(--turquoise),
+                var(--blue),
+                var(--light-blue),
+                var(--purple),
+                var(--red),
+                var(--green)
+            );
+        }
+        40% {
+            background-image: linear-gradient(
+                to right,
+                var(--blue),
+                var(--light-blue),
+                var(--purple),
+                var(--red),
+                var(--green),
+                var(--turquoise)
+            );
+        }
+        60% {
+            background-image: linear-gradient(
+                to right,
+                var(--light-blue),
+                var(--purple),
+                var(--red),
+                var(--green),
+                var(--turquoise),
+                var(--blue)
+            );
+        }
+        100% {
+            background-image: linear-gradient(
+                to right,
+                var(--purple),
+                var(--red),
+                var(--green),
+                var(--turquoise),
+                var(--blue),
+                var(--light-blue)
+            );
+        }
+    }
+</style>

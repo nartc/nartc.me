@@ -3,11 +3,8 @@ import BlogList from "../components/BlogList.astro";
 import Layout from "../layouts/Layout.astro";
 import type { Frontmatter } from "../models/frontmatter";
 
-const globs = await Astro.glob<Frontmatter>("./blog/*.md");
-const blogs = globs.map((glob) => ({
-    ...glob.frontmatter,
-    url: glob.url,
-})) as Array<Frontmatter & { url: string }>;
+const globs = await Astro.glob<Frontmatter>("../blogs/*.md");
+const blogs = globs.map((glob) => glob.frontmatter);
 ---
 
 <Layout title="Chau Tran">
