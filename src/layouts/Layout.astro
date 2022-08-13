@@ -1,6 +1,6 @@
 ---
 export interface Props {
-	title: string;
+    title: string;
 }
 
 const { title } = Astro.props as Props;
@@ -8,49 +8,118 @@ const { title } = Astro.props as Props;
 
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/x-icon" href="/favicon.ico" />
-		<meta name="generator" content={Astro.generator} />
-		<title>{title}</title>
-	</head>
-	<body>
-		<slot />
-	</body>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width" />
+        <meta name="description" content="Personal blog by Chau Tran" />
+        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+        <meta name="generator" content={Astro.generator} />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,300;0,400;0,700;1,400;1,700&display=swap"
+            rel="stylesheet"
+        />
+        <title>{title}</title>
+    </head>
+    <body>
+        <slot />
+        <style>
+            @tailwind base;
+            @tailwind components;
+            @tailwind utilities;
+
+            @media (prefers-color-scheme: light) {
+                :root {
+                    --shiki-color-text: #eeeeee;
+                    --shiki-color-background: #333333;
+                    --shiki-token-constant: #660000;
+                    --shiki-token-string: #770000;
+                    --shiki-token-comment: #880000;
+                    --shiki-token-keyword: #990000;
+                    --shiki-token-parameter: #aa0000;
+                    --shiki-token-function: #bb0000;
+                    --shiki-token-string-expression: #cc0000;
+                    --shiki-token-punctuation: #dd0000;
+                    --shiki-token-link: #ee0000;
+
+                    --primary: theme("colors.rose.600");
+                    --secondary: theme("colors.sky.600");
+                    --background-color: theme("colors.white");
+                    --text-color: theme("colors.black");
+                    --gray-light: theme("colors.neutral.500");
+                    --gray-medium: theme("colors.neutral.600");
+                    --gray-dark: theme("colors.neutral.700");
+                    --table-even-row: theme("colors.neutral.200");
+                    --shadow: theme("boxShadow.lg");
+                }
+            }
+
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --shiki-color-text: #eeeeee;
+                    --shiki-color-background: #333333;
+                    --shiki-token-constant: #660000;
+                    --shiki-token-string: #770000;
+                    --shiki-token-comment: #880000;
+                    --shiki-token-keyword: #990000;
+                    --shiki-token-parameter: #aa0000;
+                    --shiki-token-function: #bb0000;
+                    --shiki-token-string-expression: #cc0000;
+                    --shiki-token-punctuation: #dd0000;
+                    --shiki-token-link: #ee0000;
+
+                    --primary: theme("colors.sky.400");
+                    --secondary: theme("colors.rose.400");
+                    --background-color: theme("colors.neutral.900");
+                    --text-color: theme("colors.white");
+                    --gray-light: theme("colors.neutral.500");
+                    --gray-medium: theme("colors.neutral.400");
+                    --gray-dark: theme("colors.neutral.300");
+                    --table-even-row: theme("colors.neutral.700");
+                    --shadow: 0 10px 15px -3px rgba(255, 255, 255, 0.1),
+                        0 4px 6px -2px rgba(255, 255, 255, 0.05);
+                }
+            }
+
+            body {
+                background-color: var(--background-color);
+                color: var(--text-color);
+                transition: color 200ms ease-in-out,
+                    background-color 200ms ease-in-out,
+                    border-color 200ms ease-in-out, fill 200ms ease-in-out,
+                    stroke 200ms ease-in-out;
+            }
+
+            :global(h1) {
+                @apply text-5xl;
+            }
+
+            :global(h2) {
+                @apply text-4xl;
+            }
+
+            :global(h3) {
+                @apply text-3xl;
+            }
+
+            :global(h4) {
+                @apply text-2xl;
+            }
+
+            :global(h5) {
+                @apply text-xl;
+            }
+
+            :global(h6) {
+                @apply text-lg;
+            }
+
+            @screen lg {
+                body {
+                    height: 100vh;
+                }
+            }
+        </style>
+    </body>
 </html>
-<style>
-	:root {
-		--font-size-base: clamp(1rem, 0.34vw + 0.91rem, 1.19rem);
-		--font-size-lg: clamp(1.2rem, 0.7vw + 1.2rem, 1.5rem);
-		--font-size-xl: clamp(2.44rem, 2.38vw + 1.85rem, 3.75rem);
-
-		--color-text: hsl(12, 5%, 4%);
-		--color-bg: hsl(10, 21%, 95%);
-		--color-border: hsl(17, 24%, 90%);
-	}
-
-	html {
-		font-family: system-ui, sans-serif;
-		font-size: var(--font-size-base);
-		color: var(--color-text);
-		background-color: var(--color-bg);
-	}
-
-	body {
-		margin: 0;
-	}
-
-	:global(h1) {
-		font-size: var(--font-size-xl);
-	}
-
-	:global(h2) {
-		font-size: var(--font-size-lg);
-	}
-
-	:global(code) {
-		font-family: Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono,
-			Bitstream Vera Sans Mono, Courier New, monospace;
-	}
-</style>
