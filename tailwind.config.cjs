@@ -8,6 +8,9 @@ module.exports = {
             sans: ["Source Sans Pro", ...fontFamily.sans],
         },
         extend: {
+            minHeight: {
+                128: "32rem",
+            },
             boxShadow: {
                 common: "var(--shadow)",
             },

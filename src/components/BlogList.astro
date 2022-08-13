@@ -1,0 +1,20 @@
+---
+import type { Frontmatter } from "../models/frontmatter";
+import BlogItem from "./BlogItem.astro";
+
+interface Props {
+    blogs: (Frontmatter & { url: string })[];
+}
+
+const { blogs } = Astro.props as Props;
+---
+
+<div class="flex flex-col divide-y divide-gray-400">
+    {
+        blogs.map(({ url, ...blog }) => (
+            <section>
+                <BlogItem blog={blog} url={url} />
+            </section>
+        ))
+    }
+</div>
