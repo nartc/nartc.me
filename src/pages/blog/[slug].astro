@@ -4,19 +4,20 @@ import type { Frontmatter } from "../../models/frontmatter";
 
 export async function getStaticPaths() {
     const globs = await Astro.glob<Frontmatter>("../../blogs/*.md");
-    return globs.map((glob) => ({
+    return globs.map((post) => ({
         params: {
-            slug: glob.frontmatter.slug,
+            slug: post.frontmatter.slug,
         },
-        props: {
-            frontmatter: glob.frontmatter,
-            post: glob,
-        },
+        props: { post },
     }));
 }
 
-const { title, publishedAt, tags } = Astro.props.frontmatter as Frontmatter;
-const { Content } = Astro.props.post;
+const {
+    Content,
+    frontmatter: { title, publishedAt, tags },
+} = Astro.props.post as { Content: Function; frontmatter: Frontmatter };
+
+const isProduction = Astro.url.origin.includes("nartc.me");
 ---
 
 <Layout title={title + "| Chau Tran"} isBlog>
@@ -52,6 +53,26 @@ const { Content } = Astro.props.post;
         }
     </div>
     <hr />
+    {isProduction && <div>
+            <!-- prettier-ignore-start -->
+            <script src="https://giscus.app/client.js"
+                data-repo="nartc/tnc-scully"
+                data-repo-id="MDEwOlJlcG9zaXRvcnkyNjgzNzE2Mjc="
+                data-category="Announcements"
+                data-category-id="DIC_kwDOD_8Gq84CAbUC"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="en"
+                crossorigin="anonymous"
+                async
+            ></script>
+            <!-- prettier-ignore-end -->
+        </div>
+    }
 </Layout>
 
 <style is:global>
