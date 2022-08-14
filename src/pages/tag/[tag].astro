@@ -2,6 +2,7 @@
 import BlogList from "../../components/BlogList.astro";
 import Layout from "../../layouts/Layout.astro";
 import type { Frontmatter } from "../../models/frontmatter";
+import { byDate } from "../../utils/sort-by-date";
 
 export async function getStaticPaths() {
     const globs = await Astro.glob<Frontmatter>("../../blogs/*.md");
@@ -27,7 +28,8 @@ const blogsByTags = globs
             frontmatterTag.match(new RegExp(tag, "i"))
         )
     )
-    .map((glob) => glob.frontmatter);
+    .map((glob) => glob.frontmatter)
+    .sort(byDate);
 ---
 
 <Layout title={tag + "| Chau Tran"}>
