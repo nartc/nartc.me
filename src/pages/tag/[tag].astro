@@ -15,20 +15,20 @@ export async function getStaticPaths() {
     });
 
     return [...tags].map((tag) => ({
+        props: { blogs: globs.map((glob) => glob.frontmatter) },
         params: { tag },
     }));
 }
 
-const globs = await Astro.glob<Frontmatter>("../../blogs/*.md");
+const { blogs } = Astro.props as { blogs: Frontmatter[] };
 const { tag } = Astro.params as { tag: string };
 
-const blogsByTags = globs
-    .filter((glob) =>
-        glob.frontmatter.tags.some((frontmatterTag) =>
+const blogsByTags = blogs
+    .filter((blog) =>
+        blog.tags.some((frontmatterTag) =>
             frontmatterTag.match(new RegExp(tag, "i"))
         )
     )
-    .map((glob) => glob.frontmatter)
     .sort(byDate);
 ---
 
