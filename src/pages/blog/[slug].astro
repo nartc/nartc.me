@@ -83,7 +83,7 @@ const { Content } = Astro.props.post;
         @apply p-4;
     }
 
-    .blog-content a:not(.^-link) {
+    .blog-content a:not([class$="-link"]) {
         @apply text-primary underline cursor-pointer;
     }
 
@@ -132,6 +132,10 @@ const { Content } = Astro.props.post;
 
     .blog-content p > img {
         @apply mx-auto;
+    }
+
+    .blog-content p > img ~ em {
+        @apply text-center text-sm block;
     }
 
     .blog-content p > span > img {
