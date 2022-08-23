@@ -3,7 +3,7 @@ import Layout from "../../layouts/Layout.astro";
 import type { Frontmatter } from "../../models/frontmatter";
 
 export async function getStaticPaths() {
-    const globs = await Astro.glob<Frontmatter>("../../blogs/*.md");
+    const globs = await Astro.glob<Frontmatter>("../../blogs/*.{md,mdx}");
     return globs.map((post) => ({
         params: {
             slug: post.frontmatter.slug,
@@ -76,6 +76,8 @@ const isProduction = Astro.url.origin.includes("nartc.me");
 </Layout>
 
 <style is:global>
+    @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@300;400;700&display=swap');
+
     .blog-content h1,
     .blog-content h2,
     .blog-content h3,
@@ -102,6 +104,10 @@ const isProduction = Astro.url.origin.includes("nartc.me");
 
     .blog-content pre.astro-code {
         @apply p-4;
+    }
+
+    .blog-content code {
+        font-family: 'Source Code Pro', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     }
 
     .blog-content a:not([class$="-link"]) {
@@ -186,7 +192,7 @@ const isProduction = Astro.url.origin.includes("nartc.me");
     }
 
     .blog-content :not(pre) > code {
-        @apply text-secondary rounded font-thin break-words tracking-tighter;
+        @apply text-secondary rounded font-thin break-words tracking-tight;
         padding: 0.1rem;
     }
 

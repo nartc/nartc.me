@@ -5,7 +5,7 @@ import type { Frontmatter } from "../../models/frontmatter";
 import { byDate } from "../../utils/sort-by-date";
 
 export async function getStaticPaths() {
-    const globs = await Astro.glob<Frontmatter>("../../blogs/*.md");
+    const globs = await Astro.glob<Frontmatter>("../../blogs/*.{md,mdx}");
     const tags = new Set<string>();
 
     globs.forEach((glob) => {
