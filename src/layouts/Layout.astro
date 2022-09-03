@@ -142,6 +142,10 @@ const { title, isBlog = false } =
                 @apply text-lg;
             }
 
+            :global(picture.avatar > img) {
+                @apply object-cover object-center rounded-full w-full h-full visible;
+            }
+
             @screen lg {
                 body {
                     height: 100vh;
