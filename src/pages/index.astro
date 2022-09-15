@@ -5,7 +5,10 @@ import type { Frontmatter } from "../models/frontmatter";
 import { byDate } from "../utils/sort-by-date";
 
 const globs = await Astro.glob<Frontmatter>("../blogs/*.{md,mdx}");
-const blogs = globs.map((glob) => glob.frontmatter).sort(byDate);
+const blogs = globs
+    .map((glob) => glob.frontmatter)
+    .filter(frontmatter => frontmatter.published !== false)
+    .sort(byDate);
 ---
 
 <Layout title="Chau Tran">
