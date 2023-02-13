@@ -6,11 +6,11 @@ import mdx from "@astrojs/mdx";
 
 // https://astro.build/config
 export default defineConfig({
-  integrations: [tailwind(), image(), mdx()],
-  site: "https://nartc.me",
-  markdown: {
-    shikiConfig: {
-      theme: "dark-plus"
-    }
-  }
+    integrations: [tailwind(), image(), mdx()],
+    site: "https://nartc.me/",
+    markdown: {
+        shikiConfig: {
+            theme: "dark-plus",
+        },
+    },
 });

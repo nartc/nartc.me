@@ -1,6 +1,8 @@
 import rss from "@astrojs/rss";
 
-const globImportResult = import.meta.glob("../blogs/*.{md,mdx}", { eager: true });
+const globImportResult = import.meta.glob("../blogs/*.{md,mdx}", {
+    eager: true,
+});
 const globs = Object.values(globImportResult);
 
 export const get = () =>
