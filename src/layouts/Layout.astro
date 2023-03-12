@@ -28,6 +28,8 @@ const { title, isBlog = false } =
             href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap"
             rel="stylesheet"
         />
+        <link rel="stylesheet" href="/prism-coldark-cold.css" />
+        <link rel="stylesheet" href="/prism-coldark-dark.css" />
         <title>{title}</title>
     </head>
     <body>
@@ -58,18 +60,6 @@ const { title, isBlog = false } =
         <style>
             @media (prefers-color-scheme: light) {
                 :root {
-                    --shiki-color-text: #eeeeee;
-                    --shiki-color-background: #333333;
-                    --shiki-token-constant: #660000;
-                    --shiki-token-string: #770000;
-                    --shiki-token-comment: #880000;
-                    --shiki-token-keyword: #990000;
-                    --shiki-token-parameter: #aa0000;
-                    --shiki-token-function: #bb0000;
-                    --shiki-token-string-expression: #cc0000;
-                    --shiki-token-punctuation: #dd0000;
-                    --shiki-token-link: #ee0000;
-
                     --primary: theme("colors.rose.600");
                     --secondary: theme("colors.sky.600");
                     --background-color: theme("colors.white");
@@ -85,18 +75,6 @@ const { title, isBlog = false } =
 
             @media (prefers-color-scheme: dark) {
                 :root {
-                    --shiki-color-text: #eeeeee;
-                    --shiki-color-background: #333333;
-                    --shiki-token-constant: #660000;
-                    --shiki-token-string: #770000;
-                    --shiki-token-comment: #880000;
-                    --shiki-token-keyword: #990000;
-                    --shiki-token-parameter: #aa0000;
-                    --shiki-token-function: #bb0000;
-                    --shiki-token-string-expression: #cc0000;
-                    --shiki-token-punctuation: #dd0000;
-                    --shiki-token-link: #ee0000;
-
                     --primary: theme("colors.sky.400");
                     --secondary: theme("colors.rose.400");
                     --background-color: theme("colors.neutral.900");

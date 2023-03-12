@@ -9,8 +9,6 @@ export default defineConfig({
     integrations: [tailwind(), image(), mdx()],
     site: "https://nartc.me/",
     markdown: {
-        shikiConfig: {
-            theme: "dark-plus",
-        },
+        syntaxHighlight: "prism",
     },
 });
