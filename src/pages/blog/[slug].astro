@@ -194,7 +194,8 @@ const isProduction = Astro.url.origin.includes("nartc.me");
     }
 
     .blog-content :not(pre) > code {
-        @apply text-secondary rounded break-words tracking-tight bg-gray-200 p-1;
+        @apply text-secondary rounded break-words tracking-tight bg-code-background;
+        padding: 0.15rem;
     }
 
     .blog-content table {

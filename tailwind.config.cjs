@@ -21,6 +21,7 @@ module.exports = {
                 "gray-medium": "var(--gray-medium)",
                 "gray-dark": "var(--gray-dark)",
                 text: "var(--text-color)",
+                "code-background": "var(--code-background)",
             },
         },
     },
