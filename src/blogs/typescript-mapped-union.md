@@ -76,7 +76,7 @@ At first glance, it seems easy. We'll go through each step.
     + declare function table<TItem>(items: TItem[], fieldOptions: any[]): void;
     ```
 
-    In addition, we also like to constraint `TItem` to an `obejct` so the consumers can only pass in a collection of
+    In addition, we also like to constraint `TItem` to an `object` so the consumers can only pass in a collection of
     objects
 
     ```diff
