@@ -24,10 +24,11 @@ const { blogs } = Astro.props as { blogs: Frontmatter[] };
 const { tag } = Astro.params as { tag: string };
 
 const blogsByTags = blogs
-    .filter((blog) =>
-        blog.tags.some((frontmatterTag) =>
-            frontmatterTag.match(new RegExp(tag, "i"))
-        ) && blog.published !== false
+    .filter(
+        (blog) =>
+            blog.tags.some((frontmatterTag) =>
+                frontmatterTag.match(new RegExp(tag, "i"))
+            ) && blog.published !== false
     )
     .sort(byDate);
 ---

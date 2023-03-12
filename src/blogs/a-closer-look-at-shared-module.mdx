@@ -5,11 +5,12 @@ slug: a-closer-look-shared-module
 publishedAt: 2022-08-23
 tags: ["Angular"]
 ---
-import { Picture } from '@astrojs/image/components';
-import sharedModuleOne from '../assets/shared-module/shared-module-one.png';
-import sharedModuleTwo from '../assets/shared-module/shared-module-two.png';
-import sharedModuleThree from '../assets/shared-module/shared-module-three.png';
-import sharedModuleFour from '../assets/shared-module/shared-module-four.png';
+
+import { Picture } from "@astrojs/image/components";
+import sharedModuleOne from "../assets/shared-module/shared-module-one.png";
+import sharedModuleTwo from "../assets/shared-module/shared-module-two.png";
+import sharedModuleThree from "../assets/shared-module/shared-module-three.png";
+import sharedModuleFour from "../assets/shared-module/shared-module-four.png";
 
 ## What is `SharedModule` anyway?
 
@@ -40,15 +41,23 @@ Now that we have an idea of what `SharedModule` is, let's explore why `SharedMod
 
 ### Problem
 
-- Lazy-load `FooModule`
-- Lazy-load `BarModule`
-- `SharedModule` declares `SharedAComponent` and `SharedBComponent`
-- `FooModule` uses `SharedAComponent` by importing `SharedModule`
-- `BarModule` uses `SharedBComponent` by importing `SharedModule`
+-   Lazy-load `FooModule`
+-   Lazy-load `BarModule`
+-   `SharedModule` declares `SharedAComponent` and `SharedBComponent`
+-   `FooModule` uses `SharedAComponent` by importing `SharedModule`
+-   `BarModule` uses `SharedBComponent` by importing `SharedModule`
 
 <p>
-    <Picture widths={[960]} src={sharedModuleOne} alt='A screenshot showing bundlesize of FooModule, BarModule, and SharedModule' height={500}/>
-    <em>Screenshot 1. Bundle size of <code>FooModule</code>, <code>BarModule</code>, and <code>SharedModule</code></em>
+    <Picture
+        widths={[960]}
+        src={sharedModuleOne}
+        alt="A screenshot showing bundlesize of FooModule, BarModule, and SharedModule"
+        height={500}
+    />
+    <em>
+        Screenshot 1. Bundle size of <code>FooModule</code>,{" "}
+        <code>BarModule</code>, and <code>SharedModule</code>
+    </em>
 </p>
 
 From Screenshot 1, we can see that `SharedModule` is separated into its own chunk. This makes the size of `FooModule` and `BarModule` small, which appears to be a good thing.
@@ -64,8 +73,17 @@ This is **wasted**! Imagine having EVERY _shared_ components in `SharedModule`, 
 The easiest solution is to apply **Single-Component-as-Module** (or **SCAM**) here for `SharedAComponent` and `SharedBComponent`. Learn more about [SCAM](https://blog.angularindepth.com/emulating-tree-shakable-components-using-single-component-angular-modules-5e3d380364ea)
 
 <p>
-    <Picture widths={[960]} src={sharedModuleTwo} alt='A screenshot showing bundlesize of FooModule, BarModule, with two SCAMs' height={500}/>
-    <em>Screenshot 2. Bundle size of <code>FooModule</code>, <code>BarModule</code>, <code>SharedAModule</code>, and <code>SharedBModule</code></em>
+    <Picture
+        widths={[960]}
+        src={sharedModuleTwo}
+        alt="A screenshot showing bundlesize of FooModule, BarModule, with two SCAMs"
+        height={500}
+    />
+    <em>
+        Screenshot 2. Bundle size of <code>FooModule</code>,{" "}
+        <code>BarModule</code>, <code>SharedAModule</code>, and{" "}
+        <code>SharedBModule</code>
+    </em>
 </p>
 
 After we apply **SCAM** to the two shared components, we will end up with Screenshot 2. `FooModule` bundle size is getting slightly larger because `SharedAModule` is bundled together with it (the same applies to `BarModule` and `SharedBModule`).
@@ -75,17 +93,33 @@ However, when our users land on `FooModule`, we will truly only load what the us
 
 This scenario is somewhat _out of our control_ but we will explore it as well.
 
-- Only `FooModule` utilizes `FormsModule`
-- Both `FooModule` and `BarModule` utilize `FormsModule`
+-   Only `FooModule` utilizes `FormsModule`
+-   Both `FooModule` and `BarModule` utilize `FormsModule`
 
 <p>
-    <Picture widths={[960]} src={sharedModuleThree} alt='A screenshot showing bundlesize of FooModule and FormsModule' height={500}/>
-    <em>Screenshot 3. Bundle size of <code>FooModule</code> and <code>FormsModule</code></em>
+    <Picture
+        widths={[960]}
+        src={sharedModuleThree}
+        alt="A screenshot showing bundlesize of FooModule and FormsModule"
+        height={500}
+    />
+    <em>
+        Screenshot 3. Bundle size of <code>FooModule</code> and{" "}
+        <code>FormsModule</code>
+    </em>
 </p>
 
 <p>
-    <Picture widths={[960]} src={sharedModuleFour} alt='A screenshot showing bundlesize of FooModule, BarModule, and FormsModule' height={500}/>
-    <em>Screenshot 4. Bundle size of <code>FooModule</code>, <code>BarModule</code>, and <code>FormsModule</code></em>
+    <Picture
+        widths={[960]}
+        src={sharedModuleFour}
+        alt="A screenshot showing bundlesize of FooModule, BarModule, and FormsModule"
+        height={500}
+    />
+    <em>
+        Screenshot 4. Bundle size of <code>FooModule</code>,{" "}
+        <code>BarModule</code>, and <code>FormsModule</code>
+    </em>
 </p>
 
 Here, you can see that if only `FooModule` needs `FormsModule`, then Angular will know to include `FormsModule` together with `FooModule` bundle, so that if our users land on `BarModule`, we don't need to load `FormsModule` for them. (Screenshot 3)
