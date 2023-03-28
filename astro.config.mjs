@@ -3,12 +3,14 @@ import { defineConfig } from "astro/config";
 import image from "@astrojs/image";
 
 import mdx from "@astrojs/mdx";
+import rehypePrism from "rehype-prism-plus";
 
 // https://astro.build/config
 export default defineConfig({
     integrations: [tailwind(), image(), mdx()],
     site: "https://nartc.me/",
     markdown: {
-        syntaxHighlight: "prism",
+        syntaxHighlight: false,
+        rehypePlugins: [[rehypePrism, { showLineNumbers: true }]],
     },
 });

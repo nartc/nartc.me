@@ -1,14 +1,14 @@
 ---
 title: InjectionToken as a Service
 description: (hot take) I want to use InjectionToken for almost all my services
-publishedAt: 2023-03-27
+publishedAt: 2023-03-30
 tags: ["Angular"]
 slug: injection-token-service
 ---
 
 Up until recently, [Angular](https://angular.io) has been a hard-core class-based framework: Component, Directive, Pipe, Guard, Interceptor, Service, etc... Everything has been a [TypeScript](https://typescriptlang.org) class. Nowadays, Angular provides more **functional** APIs: Functional Guard, Functional Interceptor, and Functional Resolver.
 
-These functional APIs are great and if you haven't tried them out, I'd highly recommend that you do because they do **improve the authoring experience**, at least in my honest opinion.
+These functional APIs are great and if you haven't tried them out, I'd highly recommend that you do because they do **improve the authoring experience**.
 
 Now, let's take a quick look at Component, Directive, and Pipe
 
@@ -251,7 +251,7 @@ export function provideUserStore() {
 
 #### Using `provider`
 
-Alternatively, we can provide then inject `ComponentStore` instead of `new ComponentStore()` since some library author might expose their API as an Abstract Class, or you simply do not like calling `ngOnDestroy()` manually
+Alternatively, we can provide then inject `ComponentStore` instead of `new ComponentStore()` since some library author might expose their API as an Abstract Class, or you simply do not like calling `new` or `ngOnDestroy()` manually
 
 ```ts
 export function useStoreFactory(store: ComponentStore<UserState>) {
@@ -315,3 +315,52 @@ Now, we can provide different initial `UserState` when we call `provideUserStore
 ### Conclusion
 
 We briefly went over the current APIs on Angular's building blocks and learned that some of the Angular APIs have gone away from Class-based approach. We also explored a new approach to writing Services using `InjectionToken`. Hopefully, I'm able to express my thoughts on this new approach and you learn something from this post whether or not you agree with me. Thank you for reading.
+
+### FAQs
+
+**1. What is the practicality of this approach?**
+
+Good question and I'll be honest. Nothing presented here have made it to any enterprise applications that I'm a part of. That said, I do use the approach in this blog post in my side projects.
+
+**2. I like it, but is it too verbose to write?**
+
+Yes, it is a bit verbose. We can always abstract the creation of the Injection Token and the Factory Function to a utility function. Something like the following:
+
+```ts
+export const [factoryFn, TOKEN] = createInjectionToken(
+    "token descripton",
+    () => {}
+);
+```
+
+**3. What can we use if we don't have `DestroyRef`?**
+
+It is a unfortunate because `DestroyRef` really does help. In older versions, you can _maybe_ try the following hack:
+
+```ts
+const viewRef = inject(ChangeDetectorRef) as ViewRef;
+
+queueMicrotask(() => {
+    viewRef.onDestroy(() => {});
+});
+```
+
+**4. Is `InjectionToken` not a Singleton ?**
+
+Yes, by default, `new InjectionToken('description')` is just a token that you need to **provide** something for it before you can **inject** it. However, `new InjectionToken('description', {factory: () => {}})` is `providedIn: 'root'` by default. Hence, the approach introduced here does give you a Singleton. However, this is all **configurable** per situation.
+
+**5. Application code vs Library code?**
+
+I did not think about this when I write the blog post but I think I subconsciously lean towards **Library Author**.
+
+### Special Thanks
+
+This blog post is a bit in the exploratory space so I asked several of my friends in the community to review
+
+-   [Enea Jahollari](https://twitter.com/Enea_Jahollari)
+-   [Brandon Roberts](https://twitter.com/brandontroberts)
+-   [Jason Warner](https://twitter.com/xocomil_1)
+-   [Tomas Trajan](https://twitter.com/tomastrajan)
+-   [Justin Rassier](https://twitter.com/justinrassier)
+-   [Ady Ngom](https://twitter.com/adyngom)
+-   [Colum Ferry](https://twitter.com/FerryColum)
