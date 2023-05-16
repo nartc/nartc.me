@@ -10,13 +10,13 @@
         "astro": "astro"
     },
     "devDependencies": {
-        "@astrojs/image": "^0.16.2",
-        "@astrojs/mdx": "^0.18.2",
-        "@astrojs/rss": "^2.3.1",
-        "@astrojs/tailwind": "^3.1.1",
-        "astro": "^2.1.7",
-        "prettier": "2.8.7",
-        "prettier-plugin-astro": "0.8.0",
+        "@astrojs/image": "^0.16.8",
+        "@astrojs/mdx": "^0.19.1",
+        "@astrojs/rss": "^2.4.1",
+        "@astrojs/tailwind": "^3.1.2",
+        "astro": "^2.4.5",
+        "prettier": "2.8.8",
+        "prettier-plugin-astro": "0.8.1",
         "rehype-prism-plus": "^1.5.1"
     }
 }

@@ -3,11 +3,9 @@ import Layout from "../../layouts/Layout.astro";
 import type { Frontmatter } from "../../models/frontmatter";
 
 export async function getStaticPaths() {
-    const globs = await Astro.glob<Frontmatter>("../../blogs/*.{md,mdx}");
+    const globs = await Astro.glob("../../blogs/*.{md,mdx}");
     return globs.map((post) => ({
-        params: {
-            slug: post.frontmatter.slug,
-        },
+        params: { slug: post.frontmatter.slug },
         props: { post },
     }));
 }
@@ -84,6 +82,30 @@ const isProduction = Astro.url.origin.includes("nartc.me");
     .blog-content h4,
     .blog-content h5 {
         @apply mb-2 mt-8;
+    }
+
+    .blog-content h1 {
+        @apply text-5xl;
+    }
+
+    .blog-content h2 {
+        @apply text-4xl;
+    }
+
+    .blog-content h3 {
+        @apply text-3xl;
+    }
+
+    .blog-content h4 {
+        @apply text-2xl;
+    }
+
+    .blog-content h5 {
+        @apply text-xl;
+    }
+
+    .blog-content h6 {
+        @apply text-lg;
     }
 
     .blog-content strong {
