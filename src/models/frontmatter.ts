@@ -4,5 +4,5 @@ export interface Frontmatter {
     publishedAt: string;
     tags: string[];
     slug: string;
-    published?: boolean;
+    draft?: boolean;
 }

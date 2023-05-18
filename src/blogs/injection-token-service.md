@@ -4,6 +4,7 @@ description: (hot take) I want to use InjectionToken for almost all my services
 publishedAt: 2023-03-30
 tags: ["Angular"]
 slug: injection-token-service
+draft: true
 ---
 
 Up until recently, [Angular](https://angular.io) has been a hard-core class-based framework: Component, Directive, Pipe, Guard, Interceptor, Service, etc... Everything has been a [TypeScript](https://typescriptlang.org) class. Nowadays, Angular provides more **functional** APIs: Functional Guard, Functional Interceptor, and Functional Resolver.

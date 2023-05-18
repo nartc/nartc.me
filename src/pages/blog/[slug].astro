@@ -4,10 +4,12 @@ import type { Frontmatter } from "../../models/frontmatter";
 
 export async function getStaticPaths() {
     const globs = await Astro.glob("../../blogs/*.{md,mdx}");
-    return globs.map((post) => ({
-        params: { slug: post.frontmatter.slug },
-        props: { post },
-    }));
+    return globs
+        .filter((post) => !post.frontmatter.draft)
+        .map((post) => ({
+            params: { slug: post.frontmatter.slug },
+            props: { post },
+        }));
 }
 
 const {

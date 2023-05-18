@@ -28,7 +28,7 @@ const blogsByTags = blogs
         (blog) =>
             blog.tags.some((frontmatterTag) =>
                 frontmatterTag.match(new RegExp(tag, "i"))
-            ) && blog.published !== false
+            ) && !blog.draft
     )
     .sort(byDate);
 ---
