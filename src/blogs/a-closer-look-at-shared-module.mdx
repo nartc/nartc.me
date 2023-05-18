@@ -54,10 +54,7 @@ Now that we have an idea of what `SharedModule` is, let's explore why `SharedMod
         alt="A screenshot showing bundlesize of FooModule, BarModule, and SharedModule"
         height={500}
     />
-    <em>
-        Screenshot 1. Bundle size of <code>FooModule</code>,{" "}
-        <code>BarModule</code>, and <code>SharedModule</code>
-    </em>
+    <em>Screenshot 1. Bundle size of <code>FooModule</code>, <code>BarModule</code>, and <code>SharedModule</code></em>
 </p>
 
 From Screenshot 1, we can see that `SharedModule` is separated into its own chunk. This makes the size of `FooModule` and `BarModule` small, which appears to be a good thing.
@@ -79,11 +76,7 @@ The easiest solution is to apply **Single-Component-as-Module** (or **SCAM**) he
         alt="A screenshot showing bundlesize of FooModule, BarModule, with two SCAMs"
         height={500}
     />
-    <em>
-        Screenshot 2. Bundle size of <code>FooModule</code>,{" "}
-        <code>BarModule</code>, <code>SharedAModule</code>, and{" "}
-        <code>SharedBModule</code>
-    </em>
+    <em>Screenshot 2. Bundle size of <code>FooModule</code>, <code>BarModule</code>, <code>SharedAModule</code>, and <code>SharedBModule</code></em>
 </p>
 
 After we apply **SCAM** to the two shared components, we will end up with Screenshot 2. `FooModule` bundle size is getting slightly larger because `SharedAModule` is bundled together with it (the same applies to `BarModule` and `SharedBModule`).
@@ -103,10 +96,7 @@ This scenario is somewhat _out of our control_ but we will explore it as well.
         alt="A screenshot showing bundlesize of FooModule and FormsModule"
         height={500}
     />
-    <em>
-        Screenshot 3. Bundle size of <code>FooModule</code> and{" "}
-        <code>FormsModule</code>
-    </em>
+    <em>Screenshot 3. Bundle size of <code>FooModule</code> and <code>FormsModule</code></em>
 </p>
 
 <p>
@@ -116,10 +106,7 @@ This scenario is somewhat _out of our control_ but we will explore it as well.
         alt="A screenshot showing bundlesize of FooModule, BarModule, and FormsModule"
         height={500}
     />
-    <em>
-        Screenshot 4. Bundle size of <code>FooModule</code>,{" "}
-        <code>BarModule</code>, and <code>FormsModule</code>
-    </em>
+    <em>Screenshot 4. Bundle size of <code>FooModule</code>, <code>BarModule</code>, and <code>FormsModule</code></em>
 </p>
 
 Here, you can see that if only `FooModule` needs `FormsModule`, then Angular will know to include `FormsModule` together with `FooModule` bundle, so that if our users land on `BarModule`, we don't need to load `FormsModule` for them. (Screenshot 3)

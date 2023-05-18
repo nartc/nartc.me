@@ -1,0 +1,340 @@
+---
+title: Inputs Service
+description: While waiting on "Props Spreading", I start using this pattern to help with some composition problems I run into
+slug: inputs-service
+publishedAt: 2023-05-16
+tags: ["Angular"]
+---
+
+I recently shared my [thoughts](https://twitter.com/Nartc1410/status/1657385450867138560) on Twitter about how Angular is missing Props Spreading, resulting in a subpar experience with Component Composition. Let's take a moment to explore what Component Composition means in this context.
+
+## What is Composition?
+
+**Composition**, particularly **Component Composition**, is a pattern of composing different UI Elements to build other UI Elements. In Angular, there are various ways to utilize Component Composition: [Content Projection](https://angular.io/guide/content-projection), [Directives](https://angular.io/guide/built-in-directives), [Template Ref](https://angular.io/api/core/TemplateRef), and [Services](https://angular.io/guide/architecture-services)
+
+Each provides different solutions to different use cases. Here's an example:
+
+```ts
+@Component({
+    selector: "app-title",
+    standalone: true,
+    template: `
+        <h1 style="...">
+            <ng-content />
+        </h1>
+    `,
+    host: { style: "display: contents" },
+})
+export class Title {}
+
+@Component({
+    selector: "app-root",
+    standalone: true,
+    template: `
+        <app-title>Inputs Service</app-title>
+    `,
+    imports: [Title],
+})
+export class App {}
+```
+
+<em>
+    Using <strong>Content Projection</strong>
+</em>
+
+Another example of using Directive to compose UI Elements
+
+```ts
+@Directive({
+    selector: "button[appButton]",
+    standalone: true,
+    host: { style: "custom button style" },
+})
+export class Button {}
+
+@Component({
+    selector: "app-root",
+    standalone: true,
+    template: `
+        <button appButton>My Button</button>
+    `,
+    imports: [Button],
+})
+export class App {}
+```
+
+<em>
+    Using <strong>Directive</strong>
+</em>
+
+Numerous use cases and online resources offer detailed explanations of these methods. Therefore, exploring those resources for an in-depth understanding of Component Composition is advisable.
+
+## What is Props Spreading?
+
+**Props Spreading** is a technique in JSX-based technologies like React or SolidJS. Props Spreading is not an enabler of Component Composition, but it makes it much easier and more strongly typed.
+
+```ts
+export interface AlertProps {
+    severity: "success" | "error" | "warning";
+    /* and some other props */
+}
+
+export function Alert(props: AlertProps) {
+    /* some implementation of an Alert component with different Severities */
+    return <div></div>;
+}
+```
+
+<em>
+    A pseudo-example of an <code>Alert</code> component with different{" "}
+    <code>severity</code> levels
+</em>
+
+`Alert` is acceptable to use on its own. However, we can provide some abstractions to make it easier to use. For example, we can create `SuccessAlert`, `ErrorAlert`, and `WarningAlert` so the consumers do not have to keep providing `severity` prop for `Alert` component.
+
+```ts
+type AlertPropsWithoutSeverity = Omit<AlertProps, "severity">;
+
+export function SuccessAlert(props: AlertPropsWithoutSeverity) {
+    return <Alert severity="success" {...props} />;
+}
+// ErrorAlert and WarningAlert are similar
+```
+
+<em>
+    <code>SuccessAlert</code> is now easier to use and maintains type
+    definitions for every other prop than `severity`
+</em>
+
+## Problem
+
+Back to the [tweet](https://twitter.com/Nartc1410/status/1657385450867138560), the context here is that I have a `NgtsEnvironment` component. This component determines which type of components to render based on some inputs. There are `NgtsEnvironmentCube`, `NgtsEnvironmentMap`, `NgtsEnvironmentGround`, and `NgtsEnvironmentPortal`.
+
+It is troublesome for consumers to figure out which one they need to remember to use. Hence, `NgtsEnvironment` helps abstract this decision away. The problem is `NgtsEnvironment` has the **same set of Inputs** with all four types. Without something like **Props Spreading**, this results in many duplications in Component code and on the Template.
+
+> Disclaimer: NgtsEnvironment is a port of Environment from React Three Fiber ecosystem. It is already a lot of work to port these components from React over to Angular, so I did not spend additional time attempting to re-design these components to fit Angular's mental model better. Thus, the complaint 😅
+
+What can we do? Are we completely stuck without some form of **Props Spreading**? Nope, we can do better.
+
+## Inputs Service
+
+The solution here is not entirely on-par with **Props Spreading**, but it alleviates some pain I am running into. And I want to share it with the world.
+
+> Disclaimer: We'll be using **Signals**. We'll use `#` private instead of TypeScript `private` keyword. We can debate either in real-world situations because # makes Debugging a little trickier.
+
+As mentioned above, Service is also a means to achieve Component Composition in Angular. Instead of duplicating the Inputs on all components, we can have the `NgtsEnvironment` declare the Inputs and a Service to store those Inputs' values. The other components (`NgtsEnvironment***`) can inject the Service to read those Inputs.
+
+Before we start, we will shorten our Inputs to 5-6 and render 3 components: `NgtsEnvironmentGround`, `NgtsEnvironmentCube`, and `NgtsEnvironmentMap` for brevity. Let me remind everyone what `NgtsEnvironment` template would look like with 3 Inputs and 3 component types.
+
+```html
+<ngts-environment-ground
+    *ngIf="environmentGround();else noGround"
+    [ground]="environmentGround()"
+    [map]="environmentMap()"
+    [background]="environmentBackground()"
+    [frames]="environmentFrames()"
+    [near]="environmentNear()"
+    [far]="environmentFar()"
+    [resolution]="environmentResolution()"
+/>
+<ng-template #noGround>
+    <ngts-environment-map
+        *ngIf="environmentMap();else noMap"
+        [map]="environmentMap()"
+        [background]="environmentBackground()"
+        [frames]="environmentFrames()"
+        [near]="environmentNear()"
+        [far]="environmentFar()"
+        [resolution]="environmentResolution()"
+    />
+    <ng-template #noMap>
+        <ngts-environment-cube
+            [background]="environmentBackground()"
+            [frames]="environmentFrames()"
+            [near]="environmentNear()"
+            [far]="environmentFar()"
+            [resolution]="environmentResolution()"
+        />
+    </ng-template>
+</ng-template>
+```
+
+Let's start with our solution now.
+
+```ts
+@Injectable()
+export class NgtsEnvironmentInputs {
+    readonly #environmentInputs = signal<NgtsEnvironmentInputsState>({});
+
+    readonly ground = computed(() => this.#environmentInputs().ground);
+    /* we'll expose a computed for each Input */
+
+    // re-expose SettableSignal#set
+    set = this.#environmentInputs.set.bind(this.#environmentInputs);
+
+    /**
+     * Abstract SettableSignal#update so we can do
+     * this.service.update(partialState);
+     * eg: this.service.update({ foo: 'new foo' }); // { foo: 'new foo', bar: 'bar' }
+     *     this.service.update({ bar: 'new bar' }); // { foo: 'new foo', bar: 'new bar' }
+     */
+    update(partial: Partial<NgtsEnvironmentInputsState>) {
+        this.#environmentInputs.update((s) => ({ ...s, ...partial }));
+    }
+}
+
+@Component({
+    selector: "ngts-environment",
+    standalone: true,
+    template: `
+        ...
+    `,
+    providers: [NgtsEnvironmentInputs],
+})
+export class NgtsEnvironment {
+    protected readonly environmentInputs = inject(NgtsEnvironmentInputs);
+
+    @Input() set ground(ground: NgtsEnvironmentInputsState["ground"]) {
+        this.environmentInputs.update({ ground });
+    }
+
+    @Input() set background(
+        background: NgtsEnvironmentInputsState["background"]
+    ) {
+        this.environmentInputs.update({ background });
+    }
+
+    @Input() set map(map: NgtsEnvironmentInputsState["map"]) {
+        this.environmentInputs.update({ map });
+    }
+}
+```
+
+Here, we set up a `NgtsEnvironmentInputs` Service to store the Inputs' values. Naturally, we can use any data structure to store the values. In this example, we use [Angular Signals](https://angular.io/guide/signals).
+
+We provide `NgtsEnvironmentInputs` service on `NgtsEnvironment` providers, so for every new instance of `NgtsEnvironment`, we'll have a new instance of `NgtsEnvironmentInputs`.
+
+Instead of duplicating the Inputs on `NgtsEnvironmentGround`, `NgtsEnvironmentMap`, and `NgtsEnvironmentCube`, these components can inject `NgtsEnvironmentInputs`
+and use the `computed` values. With this change, `NgtsEnvironment` template now looks like the following:
+
+```html
+<ngts-environment-ground *ngIf="environmentInputs.ground();else noGround" />
+<ng-template #noGround>
+    <ngts-environment-map *ngIf="environmentInputs.map();else noMap" />
+    <ng-template #noMap>
+        <ngts-environment-cube />
+    </ng-template>
+</ng-template>
+```
+
+It is a lot cleaner! However, we do have a problem which is the default values for the Inputs. Each component can provide different default values for `NgtsEnvironmentInputsState`.
+At first glance, we might be thinking of doing this
+
+```ts
+@Directive({
+    /*...*/
+})
+export class NgtsEnvironmentMap {
+    readonly #environmentInputs = inject(NgtsEnvironmentInputs);
+
+    constructor() {
+        this.#environmentInputs.set(defaultForEnvironmentMap);
+    }
+}
+```
+
+But this would not work because of how Angular resolves Inputs. Here's the over-simplified timeline:
+
+-   `<ngts-environment [map]="mapFromConsumer()" />` is used by the consumers and they provide some Inputs
+-   `NgtsEnvironment` is instantiated along with `NgtsEnvironmentInputs`
+-   `NgtsEnvironmentInputs` stores `map` value from `@Input() set map()`
+-   `NgtsEnvironment` renders `<ngts-environment-map [map]="environmentInputs.map()" />`
+-   `NgtsEnvironmentMap` is instantiated, and its `constructor` runs. Here, `NgtsEnvironmentInputs` updates `map` with `defaultForEnvironmentMap`, which is problematic.
+
+We can work around this with two steps:
+
+-   Duplicate `map` Input on `NgtsEnvironmentMap` (similarly, we'll need to duplicate `background` Input on `NgtsEnvironmentCube`)
+    > Which Input needs to be duplicated is varied on a case-by-case basis.
+-   Implement a `patch` method in our `NgtsEnvironmentInputs` service
+
+```ts
+@Injectable()
+export class NgtsEnvironmentInputs {
+    readonly #environmentInputs = signal<NgtsEnvironmentInputsState>({});
+
+    /* code */
+
+    /**
+     * A method to upsert a partial state. If a previous state exists, it will override the partial
+     */
+    patch(partial: Partial<NgtsEnvironmentInputsState>) {
+        this.#environmentInputs.update((previous) => ({
+            ...partial,
+            ...previous,
+        }));
+    }
+}
+```
+
+Next, we can update `NgtsEnvironmentMap`
+
+```ts
+@Directive({
+    /*...*/
+})
+export class NgtsEnvironmentMap {
+    readonly #environmentInputs = inject(NgtsEnvironmentInputs);
+
+    @Input() set map(map: NgtsEnvironmentInputsState["map"]) {
+        this.#environmentInputs.update({ map });
+    }
+
+    constructor() {
+        this.#environmentInputs.patch(defaultForEnvironmentMap);
+    }
+}
+```
+
+Finally, `NgtsEnvironment` template looks like
+
+```html
+<ngts-environment-ground *ngIf="environmentInputs.ground();else noGround" />
+<ng-template #noGround>
+    <ngts-environment-map
+        *ngIf="environmentInputs.map();else noMap"
+        [map]="environmentInputs.map()"
+    />
+    <ng-template #noMap>
+        <ngts-environment-cube [background]="environmentInputs.background()" />
+    </ng-template>
+</ng-template>
+```
+
+## Conclusion
+
+**Inputs Service** is a pattern that can help with Component Composition when duplicating Inputs exist. It is a lot of code
+than **Props Spreading,** but it does get the job done. In addition, **Inputs Service** can contain encapsulated logic related to the Components at hand
+instead of just storing the Inputs values. I hope this blog post has been helpful to you. See you in the next one.
+
+## (Bonus) Signal Inputs
+
+In the near future, we will have **Signals Inputs,** which will change our approach a bit. Instead of a Service, we would have an Abstract Directive
+
+```ts
+@Directive()
+export abstract class NgtsEnvironmentInputs {
+    readonly map = input<NgtsEnvironmentInputsState["map"]>();
+    readonly ground = input<NgtsEnvironmentInputsState["ground"]>();
+    readonly background = input(false);
+    readonly frames = input(Infinity);
+    readonly near = input(1);
+    readonly far = input(1000);
+    readonly resolution = input(256);
+}
+
+@Component({
+    /* same code */,
+    providers: [{ provide: NgtsEnvironmentInputs, useExisting: NgtsEnvironment }]
+})
+export class NgtsEnvironment extends NgtsEnvironmentInputs {}
+```

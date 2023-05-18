@@ -18,7 +18,7 @@ const {
 const isProduction = Astro.url.origin.includes("nartc.me");
 ---
 
-<Layout title={title + "| Chau Tran"} isBlog>
+<Layout title={title + " | Chau Tran"} isBlog>
     <a
         class="home-link px-4 py-2 rounded-full inline-block border border-gray-300 cursor-pointer hover:text-primary transition-colors duration-200 ease-in-out lg:fixed lg:left-1"
         href="/"
@@ -185,7 +185,14 @@ const isProduction = Astro.url.origin.includes("nartc.me");
         @apply mx-auto;
     }
 
-    .blog-content p > img ~ em {
+    .blog-content em > p {
+        font: inherit;
+        @apply my-0;
+    }
+
+    .blog-content p > img ~ em,
+    .blog-content p > picture ~ em,
+    .blog-content pre ~ em {
         @apply text-center text-sm block;
     }
 
