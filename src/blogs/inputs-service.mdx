@@ -112,7 +112,7 @@ Back to the [tweet](https://twitter.com/Nartc1410/status/1657385450867138560), t
 
 It is troublesome for consumers to figure out which one they need to remember to use. Hence, `NgtsEnvironment` helps abstract this decision away. The problem is `NgtsEnvironment` has the **same set of Inputs** with all four types. Without something like **Props Spreading**, this results in many duplications in Component code and on the Template.
 
-> Disclaimer: NgtsEnvironment is a port of Environment from React Three Fiber ecosystem. It is already a lot of work to port these components from React over to Angular, so I did not spend additional time attempting to re-design these components to fit Angular's mental model better. Thus, the complaint 😅
+> Disclaimer: `NgtsEnvironment` is a port of `Environment` from React Three Fiber ecosystem. It is already a lot of work to port these components from React over to Angular, so I did not spend additional time attempting to re-design these components to fit Angular's mental model better. Thus, the complaint 😅
 
 What can we do? Are we completely stuck without some form of **Props Spreading**? Nope, we can do better.
 
@@ -120,7 +120,7 @@ What can we do? Are we completely stuck without some form of **Props Spreading**
 
 The solution here is not entirely on-par with **Props Spreading**, but it alleviates some pain I am running into. And I want to share it with the world.
 
-> Disclaimer: We'll be using **Signals**. We'll use `#` private instead of TypeScript `private` keyword. We can debate either in real-world situations because # makes Debugging a little trickier.
+> Disclaimer: We'll be using **Signals**. We'll use `#` private instead of TypeScript `private` keyword. We can debate either in real-world situations because `#` makes Debugging a little trickier.
 
 As mentioned above, Service is also a means to achieve Component Composition in Angular. Instead of duplicating the Inputs on all components, we can have the `NgtsEnvironment` declare the Inputs and a Service to store those Inputs' values. The other components (`NgtsEnvironment***`) can inject the Service to read those Inputs.
 
@@ -207,14 +207,30 @@ export class NgtsEnvironment {
     @Input() set map(map: NgtsEnvironmentInputsState["map"]) {
         this.environmentInputs.update({ map });
     }
+
+    @Input() set resolution(
+        resolution: NgtsEnvironmentInputsState["resolution"]
+    ) {
+        this.environmentInputs.update({ resolution });
+    }
+
+    @Input() set near(near: NgtsEnvironmentInputsState["near"]) {
+        this.environmentInputs.update({ near });
+    }
+
+    @Input() set far(far: NgtsEnvironmentInputsState["far"]) {
+        this.environmentInputs.update({ far });
+    }
+
+    @Input() set frames(frames: NgtsEnvironmentInputsState["frames"]) {
+        this.environmentInputs.update({ frames });
+    }
 }
 ```
 
 Here, we set up a `NgtsEnvironmentInputs` Service to store the Inputs' values. Naturally, we can use any data structure to store the values. In this example, we use [Angular Signals](https://angular.io/guide/signals).
 
-We provide `NgtsEnvironmentInputs` service on `NgtsEnvironment` providers, so for every new instance of `NgtsEnvironment`, we'll have a new instance of `NgtsEnvironmentInputs`.
-
-Instead of duplicating the Inputs on `NgtsEnvironmentGround`, `NgtsEnvironmentMap`, and `NgtsEnvironmentCube`, these components can inject `NgtsEnvironmentInputs`
+We provide `NgtsEnvironmentInputs` service on `NgtsEnvironment` providers, so for every new instance of `NgtsEnvironment`, we'll have a new instance of `NgtsEnvironmentInputs`. Instead of duplicating the Inputs on `NgtsEnvironmentGround`, `NgtsEnvironmentMap`, and `NgtsEnvironmentCube`, these components can inject `NgtsEnvironmentInputs`
 and use the `computed` values. With this change, `NgtsEnvironment` template now looks like the following:
 
 ```html
