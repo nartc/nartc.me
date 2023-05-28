@@ -1,10 +1,9 @@
 ---
 title: InjectionToken as a Service
 description: (hot take) I want to use InjectionToken for almost all my services
-publishedAt: 2023-03-30
+publishedAt: 2023-05-30
 tags: ["Angular"]
 slug: injection-token-service
-draft: true
 ---
 
 Up until recently, [Angular](https://angular.io) has been a hard-core class-based framework: Component, Directive, Pipe, Guard, Interceptor, Service, etc... Everything has been a [TypeScript](https://typescriptlang.org) class. Nowadays, Angular provides more **functional** APIs: Functional Guard, Functional Interceptor, and Functional Resolver.
@@ -56,20 +55,17 @@ export class GithubUserService {
 }
 ```
 
-There are two things I do not particularly like about this:
-
--   Using `inject` becomes more and more popular. But if I use `inject` in my Service, then I can't test my Service as simple as `new GithubUserService()` anymore. Additionally, I don't want to use Constructor-DI for my Services and Inject-DI for my other building blocks. The inconsistency haunts me
--   `GithubUserService` is both a **type** and an **implementation**. It is nice that I only need one symbol for both type and implementation, but I don't like that I expose the implementation details. We all can argue about using Abstract Class or Interface to hide the implementation details but that approach introduces enough boilerplate that the trade-off isn't worth it for me.
-
+Everything about this `GithubUserService` is completely fine. Some folks _might_ complain a bit about **Testability** in terms of
+Services and `inject()`. I too would prefer the ability to test Services with `new ()` syntax but that is a topic for another day.
 Next, I'd like to introduce an alternative to writing Services in Angular.
 
 ## Injection Token
 
 Many Angular developers, including Senior ones, are not familiar with [InjectionToken](https://angular.io/api/core/InjectionToken). Even if they know `InjectionToken`, a lot of developers do not utilize them _enough_. For this blog post, I'll be using `InjectionToken` to write a concise and easy to test **Service**
 
-> We'll skip the fact that class-based Service is familiar to Angular developers. Since we're exploring a new approach, it's easier for me to leave that out of the argument.
+> To spare me the heated arguments, I want to emphasize that this idea if purely **exploratory** at this point.
 
-Let's rewrite `GithubUserService` using `InjectionToken`. For this, we'll have two separate units: a Factory Function and an Injection Token
+Let's rewrite `GithubUserService` using `InjectionToken`. For this, we'll have two separate units: a **Factory Function** and an **Injection Token**
 
 ```ts
 // github-user.factory.ts
@@ -92,7 +88,7 @@ export const GITHUB_USER_SERVICE = new InjectionToken<GithubUserServiceApi>(
 );
 ```
 
-What's nice about this is we separate the Dependency interface (token) from the implementation (factory). Imagine our file structure is as follow:
+Imagine our file structure is as follow:
 
 ```
 .
@@ -102,7 +98,7 @@ What's nice about this is we separate the Dependency interface (token) from the 
     └── index.ts
 ```
 
-We can **only** expose the Injection Token for consumers and keep the implementation (Factory Function) as private API to `github-user` library.
+We can **choose** to expose the Injection Token for consumers and keep the implementation (Factory Function) as private API to `github-user` library.
 
 > This argument makes more sense for folks who work in a monorepo setup where each specific piece of functionality is a **library** that exposes its Public API for the rest of the monorepo.
 
@@ -158,7 +154,7 @@ This approach also allows us to separate tests, separate implementation details 
 
 ### Life-cycle hooks
 
-As of this moment, the only life-cycle hook that we care about for Services is `ngOnDestroy`. With the latest version of Angular 16.0.0-next.5, we will have a new token, [DestroyRef](https://netbasal.com/getting-to-know-the-destroyref-provider-in-angular-9791aa096d77?gi=eb7e68b4c77a), as a way to implement a clean-up mechanism for our Service. Let's rewrite our factory to also expose more than just a `searchUser` function
+As of this moment, the only life-cycle hook that we care about for Services is `ngOnDestroy`. From Angular 16, we have a new token, [DestroyRef](https://netbasal.com/getting-to-know-the-destroyref-provider-in-angular-9791aa096d77?gi=eb7e68b4c77a), as a way to implement a clean-up mechanism for our Service. Let's rewrite our factory to also expose more than just a `searchUser` function
 
 ```ts
 export function githubUserServiceFactory(
@@ -255,14 +251,14 @@ export function provideUserStore() {
 Alternatively, we can provide then inject `ComponentStore` instead of `new ComponentStore()` since some library author might expose their API as an Abstract Class, or you simply do not like calling `new` or `ngOnDestroy()` manually
 
 ```ts
-export function useStoreFactory(store: ComponentStore<UserState>) {
+export function userStoreFactory(store: ComponentStore<UserState>) {
     // work with ComponentStore API and return exactly what we need
 }
 ```
 
 ```ts
 export const USER_STORE = new InjectionToken<UserStoreApi>("UserStore");
-export function provideUserStore() {
+export function provideUserStore(initialUserState: Partial<UserState> = {}) {
     return [
         ComponentStore,
         { provide: INITIAL_STATE_TOKEN, useValue: initialUserState },
@@ -321,17 +317,19 @@ We briefly went over the current APIs on Angular's building blocks and learned t
 
 **1. What is the practicality of this approach?**
 
-Good question and I'll be honest. Nothing presented here have made it to any enterprise applications that I'm a part of. That said, I do use the approach in this blog post in my side projects.
+Good question and I'll be honest. Nothing presented here have made it to any enterprise applications that I'm a part of. That said, I do use the approach in my side projects.
 
 **2. I like it, but is it too verbose to write?**
 
 Yes, it is a bit verbose. We can always abstract the creation of the Injection Token and the Factory Function to a utility function. Something like the following:
 
 ```ts
-export const [factoryFn, TOKEN] = createInjectionToken(
-    "token descripton",
-    () => {}
-);
+export const [injectFn, provideFn, TOKEN] = createInjectionToken(theFactory, {
+    deps: [
+        /*...*/
+    ],
+    isRoot: boolean,
+});
 ```
 
 **3. What can we use if we don't have `DestroyRef`?**
