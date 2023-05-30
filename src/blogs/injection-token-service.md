@@ -63,7 +63,7 @@ Next, I'd like to introduce an alternative to writing Services in Angular.
 
 Many Angular developers, including Senior ones, are not familiar with [InjectionToken](https://angular.io/api/core/InjectionToken). Even if they know `InjectionToken`, a lot of developers do not utilize them _enough_. For this blog post, I'll be using `InjectionToken` to write a concise and easy to test **Service**
 
-> To spare me the heated arguments, I want to emphasize that this idea if purely **exploratory** at this point.
+> To spare me the heated arguments, I want to emphasize that this idea is purely **exploratory** at this point.
 
 Let's rewrite `GithubUserService` using `InjectionToken`. For this, we'll have two separate units: a **Factory Function** and an **Injection Token**
 
@@ -331,6 +331,8 @@ export const [injectFn, provideFn, TOKEN] = createInjectionToken(theFactory, {
     isRoot: boolean,
 });
 ```
+
+Here's a [Github Gist](https://gist.github.com/nartc/daddaec236e7723409d864fa25b5d63f) for one implementation of such utility.
 
 **3. What can we use if we don't have `DestroyRef`?**
 
