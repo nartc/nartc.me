@@ -4,4 +4,5 @@ description: We need to change our mindset about reacting to "changes" in Angula
 publishedAt: 2023-06-15
 tags: ["Angular"]
 slug: angular-signals-mindset
+draft: true
 ---
