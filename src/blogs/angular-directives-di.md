@@ -219,7 +219,7 @@ export class SomeDirective {
         // 👇 the <some-component> element
         elRef: ElementRef<HTMLElement>,
         // 👇 the SomeComponent instance
-        some: SomeComponent
+        some: SomeComponent,
     ) {}
 }
 ```
@@ -371,7 +371,7 @@ export class CursorPointerDirective implements OnDestroy {
         @Inject(DOCUMENT) document: Document,
         // 👇 we use Optional so we can be less disruptive. The consumers might attach [cursorPointer] on elements that are not supposed to be attached to
         // 👇       // 👇 This is arbitrary but in Angular Three, this is where the pointer's events are declared (aka Outputs)
-        @Optional() object3dInputsController: NgtObject3dInputsController
+        @Optional() object3dInputsController: NgtObject3dInputsController,
     ) {}
 
     // 👇 a Directive shares the same life-cycle with the Element/Component that it's attached to
@@ -393,7 +393,7 @@ export class CursorPointerDirective implements OnDestroy {
 
     constructor(
         @Inject(DOCUMENT) document: Document,
-        @Optional() object3dInputsController: NgtObject3dInputsController
+        @Optional() object3dInputsController: NgtObject3dInputsController,
     ) {
         // if object3dInputsController is not available, just fail fast
         if (!object3dInputsController) return;
@@ -403,12 +403,12 @@ export class CursorPointerDirective implements OnDestroy {
         merge(
             // 👇 if pointerover, map to true as in hovered: true
             object3dInputsController.pointerover.pipe(mapTo(true)),
-            // 👇 if pointerout, map to true as in hovered: false
-            object3dInputsController.pointerout.pipe(mapTo(false))
+            // 👇 if pointerout, map to false as in hovered: false
+            object3dInputsController.pointerout.pipe(mapTo(false)),
         )
             .pipe(
                 // 👇 clean up
-                takeUntil(this.destroyed$)
+                takeUntil(this.destroyed$),
             )
             .subscribe((hovered) => {
                 // 👇 the main logic
@@ -430,25 +430,16 @@ That's it! Now we can use `cursorPointer` on `ngt-mesh` and see the result:
     template: `
         <ngt-soba-box
             #sobaBox
-            <!--
-            👇
-            this
-            is
-            it.
+            <!-- 👇this is it. ngtCursor is Angular Three equivalent to cursorPointer -->
             ngtCursor
-            is
-            Angular
-            Three
-            equivalent
-            to
-            cursorPointer
-            --
+            [ngtBoxHelper]="['black']"
+            (animateReady)="onAnimateReady(sobaBox.object)" 
+            (click)="active = !active" 
+            (pointerover)="hover = true" 
+            (pointerout)="hover = false"
+            [isMaterialArray]="true"
+            [scale]="active ? [1.5, 1.5, 1.5] : [1, 1,1]" 
         >
-            ngtCursor [ngtBoxHelper]="['black']"
-            (animateReady)="onAnimateReady(sobaBox.object)" (click)="active =
-            !active" (pointerover)="hover = true" (pointerout)="hover = false"
-            [isMaterialArray]="true" [scale]="active ? [1.5, 1.5, 1.5] : [1, 1,
-            1]" >
             <ngt-cube-materials [hover]="hover"></ngt-cube-materials>
         </ngt-soba-box>
     `,
@@ -458,7 +449,7 @@ export class CubeComponent {
     hover = false;
     active = false;
 
-    // component code is so clean
+    // component code is clean 😎
 
     onAnimateReady(mesh: THREE.Mesh) {
         mesh.rotation.x = -Math.PI / 2;
