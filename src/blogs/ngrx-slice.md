@@ -103,11 +103,11 @@ export const decrement = createAction("[Counter] Decrement");
 // putting in some effect just to make a point
 export const multiplyBy = createAction(
     "[Counter] Multiply By",
-    prop<{ multiplier: number }>()
+    prop<{ multiplier: number }>(),
 );
 export const multiplyBySuccess = createAction(
     "[Counter] Multiply By Success",
-    prop<{ value: number }>()
+    prop<{ value: number }>(),
 );
 ```
 
@@ -136,7 +136,7 @@ export const counterReducer = createReducer(
         value: state.value - 1,
         decrementCount: state.decrementCount + 1,
     })),
-    on(multiplyBySuccess, (state, { value }) => ({ ...state, value }))
+    on(multiplyBySuccess, (state, { value }) => ({ ...state, value })),
 );
 ```
 
@@ -144,15 +144,15 @@ export const counterReducer = createReducer(
 export const selectCounter = createFeatureSelector<CounterState>("counter");
 export const selectValue = createSelector(
     selectCounter,
-    (state) => state.value
+    (state) => state.value,
 );
 export const selectIncrementCount = createSelector(
     selectorCounter,
-    (state) => state.incrementCount
+    (state) => state.incrementCount,
 );
 export const selectDecrementCount = createSelector(
     selectorCounter,
-    (state) => state.decrementCount
+    (state) => state.decrementCount,
 );
 ```
 
@@ -161,7 +161,10 @@ The following effect is included for completeness. `ngrx-slice` does not affect 
 ```tsx
 @Injectable()
 export class CounterEffects {
-    constructor(private store: Store, private actions$: Actions) {}
+    constructor(
+        private store: Store,
+        private actions$: Actions,
+    ) {}
 
     readonly multiplyBy = createEffect(() =>
         this.actions$.pipe(
@@ -172,11 +175,11 @@ export class CounterEffects {
                 // delay 1s to simulate async task
                 timer(1000).pipe(
                     map(() =>
-                        multiplyBySuccess({ value: currentValue * multiplier })
-                    )
-                )
-            )
-        )
+                        multiplyBySuccess({ value: currentValue * multiplier }),
+                    ),
+                ),
+            ),
+        ),
     );
 }
 ```
@@ -264,14 +267,17 @@ The return value of `createSlice` is an object with the shape `{ actions, select
 ```tsx
 @Injectable()
 export class CounterEffects {
-    constructor(private store: Store, private actions$: Actions) {}
+    constructor(
+        private store: Store,
+        private actions$: Actions,
+    ) {}
 
     readonly multiplyBy = createEffect(() =>
         this.actions$.pipe(
             // using multiplyBy.trigger
             ofType(CounterActions.multiplyBy.trigger),
             concatLatestFrom(() =>
-                this.store.select(CounterSelectors.selectValue)
+                this.store.select(CounterSelectors.selectValue),
             ),
             // switchMap to a mock side-effect (timer)
             switchMap(([{ multiplier }, currentValue]) =>
@@ -281,11 +287,11 @@ export class CounterEffects {
                     map(() =>
                         CounterActions.multiplyBy.success({
                             value: currentValue * multiplier,
-                        })
-                    )
-                )
-            )
-        )
+                        }),
+                    ),
+                ),
+            ),
+        ),
     );
 }
 ```

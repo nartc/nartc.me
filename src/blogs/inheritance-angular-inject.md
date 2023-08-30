@@ -16,7 +16,7 @@ export abstract class Instance<TObject> {
     constructor(
         protected serviceOne: ServiceOne,
         protected serviceTwo: ServiceTwo,
-        protected tokenOne: TokenOne // the list can go on and on
+        protected tokenOne: TokenOne, // the list can go on and on
     ) {}
 }
 ```
@@ -51,7 +51,7 @@ export class ConcreteTwo extends Instance<SomeConcreteTwoEntity> {
         serviceOne: ServiceOne,
         serviceTwo: ServiceTwo,
         tokenOne: TokenOne,
-        private theOneConcreteTwoNeeds: TheOne
+        private theOneConcreteTwoNeeds: TheOne,
     ) {
         // because we need to call super() and pass those injectables for the base class
         super(serviceOne, serviceTwo, tokenOne);

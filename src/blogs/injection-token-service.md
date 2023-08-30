@@ -84,7 +84,7 @@ export type GithubUserServiceApi = ReturnType<typeof githubUserServiceFactory>;
 // github-user.token.ts
 export const GITHUB_USER_SERVICE = new InjectionToken<GithubUserServiceApi>(
     "Github User Service",
-    { factory: () => githubUserServiceFactory(inject(HttpClient)) }
+    { factory: () => githubUserServiceFactory(inject(HttpClient)) },
 );
 ```
 
@@ -145,7 +145,7 @@ export class UserComponent {
     private readonly searchGithubUser = inject(GITHUB_USER_SEARCH);
 
     readonly users$ = this.query$.pipe(
-        switchMap((query) => this.searchGithubUser(query))
+        switchMap((query) => this.searchGithubUser(query)),
     );
 }
 ```
@@ -159,7 +159,7 @@ As of this moment, the only life-cycle hook that we care about for Services is `
 ```ts
 export function githubUserServiceFactory(
     http: HttpClient,
-    destroyRef: DestroyRef
+    destroyRef: DestroyRef,
 ) {
     const query$ = new BehaviorSubject("");
 
@@ -170,7 +170,7 @@ export function githubUserServiceFactory(
     return {
         setQuery: (query: string) => void query.next(query),
         users$: query$.pipe(
-            switchMap((query) => http.get(`path/to/github-api?q=${query}`))
+            switchMap((query) => http.get(`path/to/github-api?q=${query}`)),
         ),
     };
 }
@@ -182,7 +182,7 @@ With this, let's assume that our Service is no longer a Root Service so we need 
 
 ```ts
 export const GITHUB_USER_SERVICE = new InjectionToken<GithubUserServiceApi>(
-    "Github User Service"
+    "Github User Service",
 );
 
 export function provideGithubUserService() {

@@ -4,10 +4,12 @@ import Copyright from "../components/Copyright.astro";
 import Info from "../components/Info.astro";
 import Navigation from "../components/Navigation.astro";
 import Socials from "../components/Socials.astro";
+import { ViewTransitions } from "astro:transitions";
 
 export interface Props {
     title: string;
     isBlog?: boolean;
+    frontmatter?: any;
 }
 
 const { title, isBlog = false } =
@@ -32,6 +34,7 @@ const { title, isBlog = false } =
         <link rel="stylesheet" href="/prism/prism-coldark-dark.css" />
         <link rel="stylesheet" href="/prism/line-numbers.css" />
         <title>{title}</title>
+        <ViewTransitions />
     </head>
     <body>
         <div class="container mx-auto p-8 h-full">
@@ -93,9 +96,11 @@ const { title, isBlog = false } =
             body {
                 background-color: var(--background-color);
                 color: var(--text-color);
-                transition: color 200ms ease-in-out,
+                transition:
+                    color 200ms ease-in-out,
                     background-color 200ms ease-in-out,
-                    border-color 200ms ease-in-out, fill 200ms ease-in-out,
+                    border-color 200ms ease-in-out,
+                    fill 200ms ease-in-out,
                     stroke 200ms ease-in-out;
             }
 

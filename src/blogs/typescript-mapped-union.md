@@ -140,7 +140,7 @@ At first glance, it seems easy. We'll go through each step.
     ```ts
     type FieldOption<
         TItem extends Record<string, unknown>,
-        TKey extends keyof TItem = keyof TItem
+        TKey extends keyof TItem = keyof TItem,
     > =
         | TKey
         | {
@@ -232,7 +232,7 @@ type FieldOption<TItem extends Record<string, unknown>> =
 
 declare function table<TItem extends Record<string, unknown>>(
     items: TTem[],
-    fields: FieldOption<TItem>[]
+    fields: FieldOption<TItem>[],
 ): void;
 
 const items = [

@@ -199,7 +199,7 @@ export class NgtsEnvironment {
     }
 
     @Input() set background(
-        background: NgtsEnvironmentInputsState["background"]
+        background: NgtsEnvironmentInputsState["background"],
     ) {
         this.environmentInputs.update({ background });
     }
@@ -209,7 +209,7 @@ export class NgtsEnvironment {
     }
 
     @Input() set resolution(
-        resolution: NgtsEnvironmentInputsState["resolution"]
+        resolution: NgtsEnvironmentInputsState["resolution"],
     ) {
         this.environmentInputs.update({ resolution });
     }
