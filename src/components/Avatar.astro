@@ -1,5 +1,5 @@
 ---
-import { Picture } from "@astrojs/image/components";
+import { Image } from "astro:assets";
 import avatar from "../assets/speak.png";
 ---
 
@@ -8,11 +8,6 @@ import avatar from "../assets/speak.png";
         class="group w-full h-full rounded-full border-4 border-transparent text-center flex items-center relative avatar"
         data-tooltip="New version available 🚀"
     >
-        <Picture
-            class="avatar"
-            src={avatar}
-            alt="avatar of chau"
-            widths={[64]}
-        />
+        <Image class="avatar" src={avatar} alt="avatar of chau" sizes="64px" />
     </div>
 </div>
