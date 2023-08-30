@@ -16,7 +16,7 @@ const { title, isBlog = false } =
     Astro.props.frontmatter || (Astro.props as Props);
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
@@ -128,7 +128,7 @@ const { title, isBlog = false } =
                 @apply text-lg;
             }
 
-            :global(picture > img.avatar) {
+            :global(picture > img.avatar, img.avatar) {
                 @apply object-cover object-center rounded-full w-full h-full visible;
             }
 

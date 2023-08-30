@@ -5,7 +5,9 @@ import type { Frontmatter } from "../../models/frontmatter";
 import { byDate } from "../../utils/sort-by-date";
 
 export async function getStaticPaths() {
-    const globs = await Astro.glob<Frontmatter>("../../blogs/*.{md,mdx}");
+    const globs = await Astro.glob<{ frontmatter: Frontmatter }>(
+        "../../blogs/*.{md,mdx}",
+    );
     const tags = new Set<string>();
 
     globs.forEach((glob) => {
@@ -27,8 +29,8 @@ const blogsByTags = blogs
     .filter(
         (blog) =>
             blog.tags.some((frontmatterTag) =>
-                frontmatterTag.match(new RegExp(tag, "i"))
-            ) && !blog.draft
+                frontmatterTag.match(new RegExp(tag, "i")),
+            ) && !blog.draft,
     )
     .sort(byDate);
 ---

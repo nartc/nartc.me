@@ -4,7 +4,9 @@ import Layout from "../layouts/Layout.astro";
 import type { Frontmatter } from "../models/frontmatter";
 import { byDate } from "../utils/sort-by-date";
 
-const globs = await Astro.glob<Frontmatter>("../blogs/*.{md,mdx}");
+const globs = await Astro.glob<{ frontmatter: Frontmatter }>(
+    "../blogs/*.{md,mdx}",
+);
 const blogs = globs
     .map((glob) => glob.frontmatter)
     .filter((frontmatter) => !frontmatter.draft)
