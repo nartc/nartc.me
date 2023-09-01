@@ -14,7 +14,7 @@ export async function getStaticPaths() {
 
 const {
     Content,
-    frontmatter: { title, publishedAt, tags },
+    frontmatter: { title, publishedAt, tags, slug },
 } = Astro.props.post as { Content: Function; frontmatter: Frontmatter };
 
 const isProduction = Astro.url.origin.includes("nartc.me");
@@ -27,7 +27,11 @@ const isProduction = Astro.url.origin.includes("nartc.me");
     >
         All Blogs
     </a>
-    <h1 class="text-center text-4xl font-bold mb-6">
+    <h1
+        class="text-center text-4xl font-bold mb-6"
+        transition:name={slug}
+        transition:animate="initial"
+    >
         {title}
     </h1>
 
