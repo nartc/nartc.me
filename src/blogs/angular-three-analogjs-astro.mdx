@@ -162,7 +162,7 @@ Start our Astro application's development server with the following command
 npm run dev
 ```
 
-Then go to `https://localhost:4321` and we'll see our `Experience` component is rendered 🎊
+Then go to `http://localhost:4321` and we'll see our `Experience` component is rendered 🎊
 
 <BlogImage
     src={astroHome}
@@ -216,7 +216,7 @@ our component. So, let's go back to `src/pages/index.astro` and make the followi
 + <Experience client:load />
 ```
 
-Additionally, we also need to updatee `astro.config.mjs` with the following change:
+Additionally, we also need to update `astro.config.mjs` with the following change:
 
 ```diff
 export default defineConfig({
