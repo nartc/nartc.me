@@ -176,7 +176,7 @@ Then go to `https://localhost:4321` and we'll see our `Experience` component is 
 Open up the terminal so we can install a few things
 
 ```shell
-npm install angular-three three three-stdlib
+npm install angular-three@beta three three-stdlib
 npm install -D @types/three
 ```
 
@@ -215,6 +215,22 @@ our component. So, let's go back to `src/pages/index.astro` and make the followi
 - <Experience />
 + <Experience client:load />
 ```
+
+Additionally, we also need to updatee `astro.config.mjs` with the following change:
+
+```diff
+export default defineConfig({
+  integrations: [analogjsangular()],
++ vite: {
++   ssr: {
++     noExternal: ["angular-three", "three", "ngx-resize"],
++   },
++ },
+});
+```
+
+> If you do not care about SSR, you can skip the config change and use `client:only` instead of `client:load`.
+> This makes `Experience` component to only ever load on the client.
 
 Make sure there is no error from our development server as well as in the browser's console. Now, we are ready to render some 3D objects
 
