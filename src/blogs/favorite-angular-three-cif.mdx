@@ -1,0 +1,190 @@
+---
+title: My favorite CIFs from Angular Three
+description: I've talked about CIFs a lot. What are some of my favorites from Angular Three ?
+publishedAt: 2023-09-22
+tags: ["Angular"]
+slug: favorite-angular-three-cif
+---
+
+import BlogImage from "../components/BlogImage.astro";
+import cannonDemo from "../assets/favorite-cif/cannon-demo.gif";
+
+**Custom Inject Function**, or CIF, is my favorite way to compose functionalities in [Angular](https://angular.io) nowadays
+thanks to the [`inject`](https://angular.io/api/core/inject) and [Signal](https://angular.io/guide/signals). Check out one
+of my previous blog posts on [Abstract inject() the right way](./inject-function-the-right-way) to learn more.
+
+In this blog post, I'll introduce some of my favorites CIFs that I implemented in [`angular-three`](https://github.com/angular-threejs/angular-three),
+an Angular Renderer for [THREE.js](https://threejs.org)
+
+#### 1. `injectBeforeRender()`
+
+THREE.js is an abstraction over [`WebGL API`](https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API) and interacts
+seamlessly with the [Canvas API](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API). To interact with Angular Three,
+Angular developers utilize the `ngt-canvas` component. Each `ngt-canvas` component starts a separate **Animation Loop**
+(i,e: `requestAnimationFrame()`).
+
+When working on 3D projects, it is commonly, if not always, involving running animations on 3D objects.
+
+```ts
+function animate() {
+    // schedule the animate function in a animation loop
+    requestAnimationFrame(animate);
+
+    // change the properties of the 3D object bit by bit on every frame (before render step)
+    cube.rotation.x += 0.01;
+
+    // then render the scene
+    renderer.render(scene, camera);
+}
+
+// starts the render
+animate();
+```
+
+In Angular Three, the _naive_ way of opting into the Animation Loop is as follow:
+
+```ts
+export class Model {
+    #store = injectNgtStore();
+    #destroyRef = inject(DestroyRef);
+
+    constructor() {
+        const unsubscribe = this.#store.get("internal").subscribe(() => {
+            /* before render logic */
+        });
+        this.#destroyRef.onDestroy(unsubscribe);
+    }
+}
+```
+
+This is quite verbose to have to inject two symbols to opt into the Animation Loop. Hence, `angular-three` exposes a CIF called
+`injectBeforeRender` which composes `injectNgtStore` and `inject(DestroyRef)`.
+
+```diff
+export class Model {
+-   #store = injectNgtStore();
+-   #destroyRef = inject(DestroyRef);
+
+    constructor() {
+-       const unsubscribe = this.#store.get("internal").subscribe(() => {
+-           /* before render logic */
+-       });
+-       this.#destroyRef.onDestroy(unsubscribe);
++       injectBeforeRender(() => {
++           /* before render logic */
++       })
+    }
+}
+```
+
+Code: [https://github.com/angular-threejs/angular-three/blob/platform/libs/core/src/lib/before-render.ts](https://github.com/angular-threejs/angular-three/blob/platform/libs/core/src/lib/before-render.ts)
+
+#### 2. `injectNgtsGLTFLoader()`
+
+In addition to running animations in 3D projects, we frequently load external assets like 3D models, textures etc... THREE.js deals with
+external assets via a set of [`Loader`](https://threejs.org/docs/index.html?q=loader#api/en/loaders/Loader). In this section, we'll take a look at
+[`GLTFLoader`](https://threejs.org/docs/index.html?q=loader#examples/en/loaders/GLTFLoader) to load a `.glb` model
+
+Let's see how we can do it without `injectNgtsGLTFLoader`
+
+```ts
+export class Car {
+    #gltfLoader = new GLTFLoader();
+    // Optional: Provide a DRACOLoader instance to decode compressed mesh data
+    #dracoLoader = new DRACOLoader();
+
+    #model = signal<GLTF | null>(null);
+    scene = computed(() => this.#model()?.scene);
+
+    constructor() {
+        this.#dracoLoader.setDecoderPath("/examples/jsm/libs/draco/");
+        this.#gltfLoader.setDRACOLoader(this.#dracoLoader);
+
+        this.#gltfLoader.load("assets/car.glb", (gltf) => {
+            this.#model.set(gltf);
+        });
+    }
+}
+```
+
+It is not bad but there are couple of things that are lacking:
+
+-   What if `assets/car.glb` was dynamic (via `Input`)?
+-   `gltf` contains more information than just the `scene`. Like `animations` that the GLTF model has. How can we run those animations?
+
+Not to mention, we need to do the same thing for different models components in our 3D projects. Well, `injectNgtsGLTFLoader` solves
+_all_ (maybe) the problems. Let's take a look
+
+```diff
+export class Car {
+-   #gltfLoader = new GLTFLoader();
+-   // Optional: Provide a DRACOLoader instance to decode compressed mesh data
+-   #dracoLoader = new DRACOLoader();
+
+-   #model = signal<GLTF | null>(null);
++   #model = injectNgtsGLTFLoader(() => 'assets/car.glb');
+    scene = computed(() => this.#model()?.scene);
+
+    constructor() {
+-       this.#dracoLoader.setDecoderPath("/examples/jsm/libs/draco/");
+-       this.#gltfLoader.setDRACOLoader(this.#dracoLoader);
+
+-       this.#gltfLoader.load("assets/car.glb", (gltf) => {
+-           this.#model.set(gltf);
+-       });
+    }
+}
+```
+
+`injectNgtsGLTFLoader` does several things underneath:
+
+-   Create a `Signal` to store the 3D model data
+-   Set up an `effect` to re-fetch if the input changes
+    -   Support Array input, Directory input, or single input
+-   Allow consumers to specify whether they want to use `DRACOLoader` and/or `MeshoptDecoder`
+-   Support for preloading external assets **OUTSIDE** of Angular building blocks
+
+    ```ts
+    injectNgtsGLTFLoader.preload(() => "assets/car.glb");
+
+    @Component({})
+    export class Car {
+        #model = injectNgtsGLTFLoader(() => "assets/car.glb");
+        scene = computed(() => this.#model()?.scene);
+    }
+    ```
+
+In addition, the base `injectNgtLoader()` (which `injectNgtsGLTFLoader` utilizes) handles in-memory cache so the consumers
+don't have to load the same asset twice.
+
+Code: [https://github.com/angular-threejs/angular-three/blob/platform/libs/soba/loaders/src/gltf-loader/gltf-loader.ts](https://github.com/angular-threejs/angular-three/blob/platform/libs/soba/loaders/src/gltf-loader/gltf-loader.ts)
+
+#### 3. `injectBody()`
+
+`injectBody()` is a CIF that deals with connecting the 3D objects to the Physics World.
+
+<BlogImage src={cannonDemo} alt="injectBody Demo" />
+
+> Sorry for the low quality GIF, I had to tune it way down to display it in my blog.
+
+As we can see from the GIF (I hope you could see it 😛), there are quite a few things that are happenning
+when we deal with Physics
+
+-   The physics engine itself (i.e: `cannonjs`)
+-   Attaching the 3D objects (the cubes and planes) to the Body in the Cannon World
+-   Reacting to inputs like `debug` and `gravity` etc.
+-   Expose APIs to update the properties of the Body in the Cannon World (via Web Worker)
+
+Without `injectBody()`, the amount of code we need to tie 3D objects to the Cannon World would be tremendous and repetitive.
+
+Code: [https://github.com/angular-threejs/angular-three/blob/platform/libs/cannon/services/src/lib/body.ts](https://github.com/angular-threejs/angular-three/blob/platform/libs/cannon/services/src/lib/body.ts)
+
+### Conclusion
+
+Above is my 3 favorite CIFs in `angular-three`. There are various other CIFs in `angular-three` but the concept they share is very similar:
+
+-   Compose other CIFs
+-   Make use of APIs that rely on the Injection Context (i.e: `inject`, `effect`)
+-   Are friendly with Signals. They accept Signals and return Signals
+
+Do you have a favorite CIF or do you have something that could be turned into a CIF? I would love to know! Thanks for reading.
