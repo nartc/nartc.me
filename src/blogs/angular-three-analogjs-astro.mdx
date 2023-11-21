@@ -186,7 +186,7 @@ Let's go back to `Experience.ts` and add the following code
 
 ```ts
 import { CUSTOM_ELEMENTS_SCHEMA, Component } from "@angular/core";
-import { NgtCanvas } from 'angular-three';
+import { NgtCanvas } from "angular-three";
 
 @Component({
     standalone: true,
@@ -197,8 +197,10 @@ class Scene {}
 
 @Component({
     standalone: true,
-    template: `<ngt-canvas [sceneGraph]="scene" />`,
-    imports: [NgtCanvas]
+    template: `
+        <ngt-canvas [sceneGraph]="scene" />
+    `,
+    imports: [NgtCanvas],
 })
 export class Experience {
     scene = Scene;
@@ -207,7 +209,7 @@ export class Experience {
 
 > You can also break up `Scene` into a separate file
 
-Since Three.js is a Canvas-base library (i.e: [WebGL](https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API)), we want 
+Since Three.js is a Canvas-base library (i.e: [WebGL](https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API)), we want
 to enable client-side JavaScript for our `Experience` component. Astro allows us to do so by using `client:load` directive on
 our component. So, let's go back to `src/pages/index.astro` and make the following change
 
@@ -265,22 +267,22 @@ Here, we are _teaching_ Angular Three how to render a `THREE.Mesh`, a `THREE.Mes
 class Scene {}
 ```
 
-Notice how we use `ngt-*` to render our 3D objects. `extend()` turns what we pass in into a **catalogue** of HTML Custom Element tags prefixed with `ngt-` 
+Notice how we use `ngt-*` to render our 3D objects. `extend()` turns what we pass in into a **catalogue** of HTML Custom Element tags prefixed with `ngt-`
 followed by the name of the entity in `kebab-case`. This is also the reason why we need `CUSTOM_ELEMENTS_SCHEMA`.
 
 Now, our Astro application renders a pink "box"
 
-
-<BlogImage  src={astroBox} alt="Astro home page a pink box" />
+<BlogImage src={astroBox} alt="Astro home page a pink box" />
 
 ### Increase the Canvas area
 
 Our canvas is a little too small. This is because of two reasons:
-- Canvas default height is `150px` per [spec](https://www.w3.org/TR/2012/WD-html5-author-20120329/the-canvas-element.html#the-canvas-element)
-- Our `Experience`'s parent element doesn't have a `height` set
 
-`NgtCanvas` component is designed to take on the parent's dimensions. Hence, we can control our canvas' sizes by wrapping `<Experience />` with 
-a container with a specified  `height`
+-   Canvas default height is `150px` per [spec](https://www.w3.org/TR/2012/WD-html5-author-20120329/the-canvas-element.html#the-canvas-element)
+-   Our `Experience`'s parent element doesn't have a `height` set
+
+`NgtCanvas` component is designed to take on the parent's dimensions. Hence, we can control our canvas' sizes by wrapping `<Experience />` with
+a container with a specified `height`
 
 ```diff
 + <div style="height: 600px">
@@ -290,7 +292,10 @@ a container with a specified  `height`
 
 The canvas will take up `600px` and our pink box will be more visible.
 
-<BlogImage  src={astroBoxBig} alt="Astro home page a pink box on a large canvas" />
+<BlogImage
+    src={astroBoxBig}
+    alt="Astro home page a pink box on a large canvas"
+/>
 
 ### Animate the box
 
@@ -322,10 +327,11 @@ class Scene {
 `(beforeRender)` allows our objects to participate in the animation loop that Angular Three creates to render the Scene Graph.
 This function runs outside of Angular Zone (i.e: outside of Angular Change Detection mechanism) to maintain high FPS. It is good practice
 to **NOT** update states in this function.
-- The `state` object contains useful information about Angular Three internals like `delta`, `clock`, the default `THREE.Scene`, the default `THREE.Camera`, and more.
-- The `object` is the instance of the 3D object that Angular Three renders. In this case, it is the `THREE.Mesh` instance from `ngt-mesh`
 
-<BlogImage  src={astroBoxAnimate} alt="A rotating pink box" format="gif"/>
+-   The `state` object contains useful information about Angular Three internals like `delta`, `clock`, the default `THREE.Scene`, the default `THREE.Camera`, and more.
+-   The `object` is the instance of the 3D object that Angular Three renders. In this case, it is the `THREE.Mesh` instance from `ngt-mesh`
+
+<BlogImage src={astroBoxAnimate} alt="A rotating pink box" format="gif" />
 
 ### Let there be lights
 
@@ -352,7 +358,7 @@ Then we can update our template
 
 But wait, our box is now pitch black.
 
-<BlogImage  src={astroBoxBlack} alt="A 'black' box" format="gif"/>
+<BlogImage src={astroBoxBlack} alt="A 'black' box" format="gif" />
 
 We haven't added any lights yet. Imagine a dark room, there is no light that our box can reflect on. Let's add some lights
 
@@ -402,7 +408,11 @@ class Scene {
 
 Voila! Now our box looks so much better, with dimensionality, like a real box.
 
-<BlogImage  src={astroBoxAnimateLights} alt="A 'real' rotating pink box" format="gif"/>
+<BlogImage
+    src={astroBoxAnimateLights}
+    alt="A 'real' rotating pink box"
+    format="gif"
+/>
 
 ### Take control of the camera
 
@@ -465,22 +475,26 @@ class Scene {
 }
 ```
 
-- We import `injectNgtStore` and `NgtArgs` from `angular-three`
-- We add `NgtArgs` to `imports` array to make `*args` directive available to our template
-- We call `injectNgtStore` to grab the internal Angular Three store object via DI
-  - `camera` is the default camera. `this.store.select()` returns a [Signal](https://angular.io/guide/signals)
-  - `domElement` is the DOM element from the `WebGLRenderer`. `this.store.select()` accepts multiple arguments to select nested objects.
-- We render `ngt-orbit-controls` and pass `camera()` along with `domElement()` to `*args`
-  - This is equivalent to `new OrbitControls(camera, domElement)`
+-   We import `injectNgtStore` and `NgtArgs` from `angular-three`
+-   We add `NgtArgs` to `imports` array to make `*args` directive available to our template
+-   We call `injectNgtStore` to grab the internal Angular Three store object via DI
+    -   `camera` is the default camera. `this.store.select()` returns a [Signal](https://angular.io/guide/signals)
+    -   `domElement` is the DOM element from the `WebGLRenderer`. `this.store.select()` accepts multiple arguments to select nested objects.
+-   We render `ngt-orbit-controls` and pass `camera()` along with `domElement()` to `*args`
+    -   This is equivalent to `new OrbitControls(camera, domElement)`
 
 Back to our running application and BOOM 💥, we can grab the scene, rotate it around, and zoom in/out
 
-<BlogImage  src={astroBoxOrbitControls} alt="Controlling the camera with OrbitControls" format="gif"/>
+<BlogImage
+    src={astroBoxOrbitControls}
+    alt="Controlling the camera with OrbitControls"
+    format="gif"
+/>
 
 ## Conclusion
 
 Astro is truly a magnificient technology. It is light-weight, wicked fast, and easy to integrate with other frameworks.
-On the other hand, I cannot praise AnalogJS enough for what it enables for Angular developers. In this blog post, we learn 
+On the other hand, I cannot praise AnalogJS enough for what it enables for Angular developers. In this blog post, we learn
 how to use AnalogJS to bring Angular components to Astro land with an example of rendering a 3D box using Angular Three.
 
 Give [Astro](https://github.com/withastro/astro), [AnalogJS](https://github.com/analogjs/analog), and [Angular](https://github.com/angular/angular)

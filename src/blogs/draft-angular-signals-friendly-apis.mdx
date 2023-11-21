@@ -139,7 +139,7 @@ export function injectGLTF(path: Signal<string>): Signal<GLTF | null> {
 }
 ```
 
-(*): We can instantiate the `GLTFLoader` instance outside of the Effect. I put it inside of the Effect to show that 
+(\*): We can instantiate the `GLTFLoader` instance outside of the Effect. I put it inside of the Effect to show that
 we can **choose** a Loader based on the inputs (it can be a singular `path` or it can be an array of `paths` for a Cube-type Texture Loader).
 
 That's it! Now let's see how we can use it
@@ -165,4 +165,3 @@ export class CarModel {
 ```
 
 What's cool about Signal is that we can use `gltf()` on the template, or we can call `gltf()` anywhere we want to get model value (note that it might be `null`).
-
