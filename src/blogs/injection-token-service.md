@@ -313,6 +313,12 @@ Now, we can provide different initial `UserState` when we call `provideUserStore
 
 We briefly went over the current APIs on Angular's building blocks and learned that some of the Angular APIs have gone away from Class-based approach. We also explored a new approach to writing Services using `InjectionToken`. Hopefully, I'm able to express my thoughts on this new approach and you learn something from this post whether or not you agree with me. Thank you for reading.
 
+### Updates
+
+#### Nov 24 2023
+
+I have been using this approach for the past 6 months or so and it works great for my **libraries**. Since I used it so much, I've created a utility available in [`ngxtension`](https://ngxtension.netlify.app) called `createInjectionToken`
+
 ### FAQs
 
 **1. What is the practicality of this approach?**
