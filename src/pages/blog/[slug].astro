@@ -182,7 +182,7 @@ const isProduction = Astro.url.origin.includes("nartc.me");
     }
 
     .blog-content ol li:not(:last-of-type),
-    .blog-content ul li:not(:last-of-type) {
+    .blog-content ul:not([role="tablist"]) li:not(:last-of-type) {
         @apply mb-2;
     }
 
@@ -317,6 +317,18 @@ const isProduction = Astro.url.origin.includes("nartc.me");
             var(--red)
         );
         animation: colorAnimation 1s infinite;
+    }
+
+    .blog-content ul[role="tablist"] {
+        --sl-color-gray-5: var(--gray-light);
+        @apply mt-4 mb-0 mx-0;
+    }
+
+    .blog-content
+        ul[role="tablist"]
+        li.tab[role="presentation"]
+        a[role="tab"][aria-selected="true"] {
+        --sl-color-text-accent: var(--primary);
     }
 
     @keyframes colorAnimation {
