@@ -34,8 +34,10 @@ export async function getStaticPaths() {
 			}
 		}
 
+		blogsByTag.sort(byDate);
+
 		paths.push({
-			props: { blogs: blogsByTag.toSorted(byDate) },
+			props: { blogs: blogsByTag },
 			params: { tag },
 		});
 	}
