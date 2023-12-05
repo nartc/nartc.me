@@ -1,0 +1,398 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "../../layouts/Layout.astro";
+
+export async function getStaticPaths() {
+	const blogEntries = await getCollection("blogs");
+
+	type BlogEntry = (typeof blogEntries)[number];
+
+	return blogEntries.reduce(
+		(acc, entry) => {
+			if (import.meta.env.DEV) {
+				acc.push({
+					params: { slug: entry.slug },
+					props: { entry, isProduction: false },
+				});
+			} else {
+				if (!entry.data.draft) {
+					acc.push({
+						params: { slug: entry.slug },
+						props: { entry, isProduction: true },
+					});
+				}
+			}
+			return acc;
+		},
+		[] as Array<{
+			params: { slug: BlogEntry["slug"] };
+			props: { entry: BlogEntry; isProduction: boolean };
+		}>,
+	);
+}
+const { entry, isProduction } = Astro.props;
+const { Content } = await entry.render();
+---
+
+<Layout title={entry.data.title + " | Chau Tran"} isBlog>
+	<a
+		class="home-link inline-block cursor-pointer rounded-full border border-gray-300 px-4 py-2 transition-colors duration-200 ease-in-out hover:text-primary lg:fixed lg:left-1"
+		href="/"
+	>
+		All Blogs
+	</a>
+	<h1
+		class="mb-6 text-center text-4xl font-bold"
+		transition:name={entry.slug}
+		transition:animate="initial"
+	>
+		{entry.data.title}
+	</h1>
+
+	<section class="blog-content">
+		<Content />
+	</section>
+
+	<h4 class="mt-4 text-lg italic">
+		Published on {entry.data.publishedAt.toDateString()}
+	</h4>
+	<hr />
+	<div class="my-4 flex flex-row items-center">
+		{
+			entry.data.tags.map((tag, index) => (
+				<a
+					class:list={[
+						"tag-link cursor-pointer rounded-full border border-text px-4 py-2 text-center transition-colors duration-200 ease-in-out hover:text-primary",
+						{ "ml-1": index !== 0 },
+					]}
+					href={"/tag/" + tag.toLowerCase()}
+				>
+					{tag}
+				</a>
+			))
+		}
+	</div>
+	<hr />
+	{
+		isProduction && (
+			<div>
+				<script
+					src="https://giscus.app/client.js"
+					data-repo="nartc/tnc-scully"
+					data-repo-id="MDEwOlJlcG9zaXRvcnkyNjgzNzE2Mjc="
+					data-category="Announcements"
+					data-category-id="DIC_kwDOD_8Gq84CAbUC"
+					data-mapping="pathname"
+					data-strict="0"
+					data-reactions-enabled="1"
+					data-emit-metadata="0"
+					data-input-position="bottom"
+					data-theme="preferred_color_scheme"
+					data-lang="en"
+					crossorigin="anonymous"
+					async
+				/>
+			</div>
+		)
+	}
+</Layout>
+
+<style is:global>
+	.blog-content h1,
+	.blog-content h2,
+	.blog-content h3,
+	.blog-content h4,
+	.blog-content h5 {
+		@apply mb-2 mt-8;
+	}
+
+	.blog-content h1 {
+		@apply text-5xl;
+	}
+
+	.blog-content h2 {
+		@apply text-4xl;
+	}
+
+	.blog-content h3 {
+		@apply text-3xl;
+	}
+
+	.blog-content h4 {
+		@apply text-2xl;
+	}
+
+	.blog-content h5 {
+		@apply text-xl;
+	}
+
+	.blog-content h6 {
+		@apply text-lg;
+	}
+
+	.blog-content strong {
+		@apply font-bold;
+	}
+
+	.blog-content h6 {
+		@apply flex border-b border-solid border-gray-dark;
+	}
+
+	.blog-content h6 > strong {
+		@apply mt-4 px-2 py-1 text-sm font-thin;
+	}
+
+	.blog-content h6 + pre {
+		@apply mt-0;
+	}
+
+	.blog-content pre.astro-code {
+		@apply p-4;
+	}
+
+	.blog-content code {
+		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+			"Liberation Mono", "Courier New", monospace;
+	}
+
+	.blog-content a:not([class$="-link"]) {
+		@apply cursor-pointer text-primary underline;
+	}
+
+	.blog-content iframe {
+		@apply mx-auto mb-2 mt-4 min-h-full max-w-full;
+	}
+
+	.blog-content iframe + p {
+		@apply -mt-2 text-center;
+	}
+
+	.blog-content iframe + p > em {
+		@apply text-sm;
+	}
+
+	.blog-content blockquote {
+		@apply my-4 border-l-4 border-solid border-gray-dark px-2 py-1 text-gray-medium;
+	}
+
+	.blog-content ol {
+		@apply list-decimal;
+	}
+
+	.blog-content ul {
+		@apply list-disc;
+	}
+
+	.blog-content ol,
+	.blog-content ul {
+		@apply my-4 ml-8;
+	}
+
+	.blog-content ol li:not(:last-of-type),
+	.blog-content ul:not([role="tablist"]) li:not(:last-of-type) {
+		@apply mb-2;
+	}
+
+	.blog-content li,
+	.blog-content p {
+		@apply text-lg font-light leading-7;
+	}
+
+	.blog-content p {
+		@apply my-4;
+	}
+
+	.blog-content p > img,
+	.blog-content picture > img {
+		@apply mx-auto;
+	}
+
+	.blog-content em > p {
+		font: inherit;
+		@apply my-0;
+	}
+
+	.blog-content p > img ~ em,
+	.blog-content p > picture ~ em,
+	.blog-content pre ~ em {
+		@apply block text-center text-sm;
+	}
+
+	.blog-content p > span > img {
+		@apply inline-block;
+	}
+
+	.blog-content figure > img {
+		@apply mx-auto;
+	}
+
+	.blog-content figure > figcaption {
+		@apply text-center;
+	}
+
+	.blog-content figure > figcaption > p {
+		@apply mt-0 text-sm italic;
+	}
+
+	@screen md {
+		.blog-content p > img {
+			max-width: 75%;
+		}
+	}
+
+	.blog-content iframe {
+		@apply min-h-128 w-full;
+	}
+
+	.blog-content :not(pre) > code {
+		@apply break-words rounded bg-code-background tracking-tight text-secondary;
+		padding: 0.15rem;
+	}
+
+	.blog-content table {
+		@apply block w-full overflow-auto;
+		border-spacing: 0;
+		border-collapse: collapse;
+	}
+
+	.blog-content table th {
+		@apply font-semibold;
+	}
+
+	.blog-content table td,
+	.blog-content table th {
+		@apply border border-solid border-gray-300 px-1.5 py-3.5;
+	}
+
+	.blog-content table tr {
+		@apply border-t border-solid border-gray-400 transition-colors;
+		background-color: var(--background-color);
+	}
+
+	.blog-content table tr:nth-child(2n) {
+		background-color: var(--table-even-row);
+	}
+
+	.blog-content .utterances {
+		max-width: 100% !important;
+	}
+
+	--green: #4cd964;
+	--turquoise: #5ac8fa;
+	--blue: #007aff;
+	--light-blue: #7dc8e8;
+	--purple: #5856d6;
+	--red: #ff2d55;
+
+	.blog-content .progress {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		padding: 0.25rem;
+		background: rgba(0, 0, 0, 0.25);
+		box-shadow:
+			inset 0 1px 2px rgba(0, 0, 0, 0.25),
+			0 1px rgba(255, 255, 255, 0.08);
+	}
+
+	.blog-content .progress .progress-bar3 {
+		height: 0.5rem;
+		border-radius: 0.25rem;
+		background-image: linear-gradient(
+			to right,
+			var(--green),
+			var(--turquoise),
+			var(--blue),
+			var(--light-blue),
+			var(--purple),
+			var(--red)
+		);
+		transition: 0.4s linear;
+		transition-property: width, background-color;
+	}
+
+	.blog-content .progress-infinite .progress-bar3 {
+		width: 100%;
+		background-image: linear-gradient(
+			to right,
+			var(--green),
+			var(--turquoise),
+			var(--blue),
+			var(--light-blue),
+			var(--purple),
+			var(--red)
+		);
+		animation: colorAnimation 1s infinite;
+	}
+
+	.blog-content ul[role="tablist"] {
+		--sl-color-gray-5: var(--gray-light);
+		@apply mx-0 mb-0 mt-4;
+	}
+
+	.blog-content
+		ul[role="tablist"]
+		li.tab[role="presentation"]
+		a[role="tab"][aria-selected="true"] {
+		--sl-color-text-accent: var(--primary);
+	}
+
+	@keyframes colorAnimation {
+		0% {
+			background-image: linear-gradient(
+				to right,
+				var(--green),
+				var(--turquoise),
+				var(--blue),
+				var(--light-blue),
+				var(--purple),
+				var(--red)
+			);
+		}
+		20% {
+			background-image: linear-gradient(
+				to right,
+				var(--turquoise),
+				var(--blue),
+				var(--light-blue),
+				var(--purple),
+				var(--red),
+				var(--green)
+			);
+		}
+		40% {
+			background-image: linear-gradient(
+				to right,
+				var(--blue),
+				var(--light-blue),
+				var(--purple),
+				var(--red),
+				var(--green),
+				var(--turquoise)
+			);
+		}
+		60% {
+			background-image: linear-gradient(
+				to right,
+				var(--light-blue),
+				var(--purple),
+				var(--red),
+				var(--green),
+				var(--turquoise),
+				var(--blue)
+			);
+		}
+		100% {
+			background-image: linear-gradient(
+				to right,
+				var(--purple),
+				var(--red),
+				var(--green),
+				var(--turquoise),
+				var(--blue),
+				var(--light-blue)
+			);
+		}
+	}
+</style>

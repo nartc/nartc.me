@@ -1,9 +1,9 @@
 ---
-import type { Frontmatter } from "../models/frontmatter";
+import type { CollectionEntry } from "astro:content";
 import BlogItem from "./BlogItem.astro";
 
 interface Props {
-	blogs: Frontmatter[];
+	blogs: CollectionEntry<"blogs">[];
 }
 
 const { blogs } = Astro.props as Props;

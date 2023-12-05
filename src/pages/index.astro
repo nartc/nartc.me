@@ -1,21 +1,13 @@
 ---
+import { getCollection } from "astro:content";
 import BlogList from "../components/BlogList.astro";
 import Layout from "../layouts/Layout.astro";
+import { byDate } from "../utils/sort-by-date";
 
-// const globs = await Astro.glob<{ frontmatter: Frontmatter }>(
-// 	"../blogs/*.{md,mdx}",
-// );
-
-const blogs: any[] = [];
-
-// for (const glob of globs) {
-// 	if (glob.frontmatter.draft && import.meta.env.PROD) {
-// 		continue;
-// 	}
-// 	blogs.push(glob.frontmatter);
-// }
-//
-// blogs.sort(byDate);
+const allBlogs = await getCollection("blogs");
+const blogs = allBlogs
+	.filter((blog) => import.meta.env.DEV || !blog.data.draft)
+	.toSorted(byDate);
 ---
 
 <Layout title="Chau Tran">

@@ -1,0 +1,52 @@
+---
+import BlogList from "../../components/BlogList.astro";
+import Layout from "../../layouts/Layout.astro";
+import { byDate } from "../../utils/sort-by-date";
+import { getCollection, type CollectionEntry } from "astro:content";
+
+export async function getStaticPaths() {
+	const allBlogs = await getCollection("blogs");
+	const tags = new Set<string>();
+
+	allBlogs.forEach((blog) => {
+		blog.data.tags.forEach((tag) => {
+			tags.add(tag.toLowerCase());
+		});
+	});
+
+	const paths: Array<{
+		props: { blogs: CollectionEntry<"blogs">[] };
+		params: { tag: string };
+	}> = [];
+
+	for (const tag of tags.values()) {
+		const blogsByTag: CollectionEntry<"blogs">[] = [];
+
+		for (const blog of allBlogs) {
+			if (blog.data.draft && import.meta.env.PROD) continue;
+
+			const hasTag = blog.data.tags.some((blogTag) =>
+				blogTag.match(new RegExp(tag, "i")),
+			);
+
+			if (hasTag) {
+				blogsByTag.push(blog);
+			}
+		}
+
+		paths.push({
+			props: { blogs: blogsByTag.toSorted(byDate) },
+			params: { tag },
+		});
+	}
+
+	return paths;
+}
+
+const { blogs } = Astro.props;
+const { tag } = Astro.params as { tag: string };
+---
+
+<Layout title={tag + "| Chau Tran"}>
+	<BlogList blogs={blogs} />
+</Layout>

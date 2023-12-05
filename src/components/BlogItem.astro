@@ -1,28 +1,28 @@
 ---
-import type { Frontmatter } from "../models/frontmatter";
+import type { CollectionEntry } from "astro:content";
 
 interface Props {
-	blog: Frontmatter;
+	blog: CollectionEntry<"blogs">;
 }
 
-const { blog } = Astro.props as Props;
+const { blog } = Astro.props;
 ---
 
 <div class="py-4">
 	<div class="flex items-center justify-between">
 		<span class="font-light text-gray-medium">
-			{new Date(blog.publishedAt).toDateString()}
+			{blog.data.publishedAt.toDateString()}
 			<!-- <span *ngIf="route.readingTime">
             - {{ route.readingTime | number: '1.0-0' }} {{ route.readingTime > 1 ? 'mins' : 'min' }}
           </span> -->
 		</span>
 		{
-			blog.tags.length && (
+			blog.data.tags.length && (
 				<a
 					class="cursor-pointer rounded px-2 py-1 text-sm font-bold text-secondary transition-colors duration-200 ease-in-out hover:bg-secondary hover:text-white"
-					href={"/tag/" + blog.tags[0].toLowerCase()}
+					href={"/tag/" + blog.data.tags[0].toLowerCase()}
 				>
-					{blog.tags[0]}
+					{blog.data.tags[0]}
 				</a>
 			)
 		}
@@ -34,10 +34,10 @@ const { blog } = Astro.props as Props;
 			transition:name={blog.slug}
 			transition:animate="initial"
 		>
-			{blog.title}
+			{blog.data.title}
 		</a>
-		<p class="mt-2 font-thin text-gray-dark">
-			{blog.description}
+		<p class="mt-2 font-light text-gray-dark">
+			{blog.data.description}
 		</p>
 	</div>
 </div>

@@ -9,11 +9,9 @@ import { ViewTransitions } from "astro:transitions";
 export interface Props {
 	title: string;
 	isBlog?: boolean;
-	frontmatter?: any;
 }
 
-const { title, isBlog = false } =
-	Astro.props.frontmatter || (Astro.props as Props);
+const { title, isBlog = false } = Astro.props;
 ---
 
 <!doctype html>
