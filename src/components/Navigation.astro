@@ -1,0 +1,50 @@
+---
+const pathname = new URL(Astro.request.url).pathname;
+const currentPath = pathname.slice(1);
+---
+
+<nav class="mb-4 flex flex-row items-center lg:flex-col lg:items-start">
+	<a
+		href="/"
+		class:list={[
+			"mb-0 cursor-pointer transition-colors duration-200 ease-in-out hover:text-primary hover:underline lg:mb-2",
+			{ "text-primary underline": currentPath === "" },
+		]}
+	>
+		Blogs
+	</a>
+	<a
+		href="/uses/"
+		class:list={[
+			"mb-0 cursor-pointer transition-colors duration-200 ease-in-out hover:text-primary hover:underline lg:mb-2",
+			{ "text-primary underline": currentPath === "uses/" },
+		]}
+	>
+		Uses
+	</a>
+	<a
+		href="/about/"
+		class:list={[
+			"mb-0 cursor-pointer transition-colors duration-200 ease-in-out hover:text-primary hover:underline lg:mb-2",
+			{ "text-primary underline": currentPath === "about/" },
+		]}
+	>
+		About Me
+	</a>
+	<a
+		class="mb-0 ml-2 cursor-pointer transition-colors duration-200 ease-in-out hover:text-primary hover:underline lg:mb-2 lg:ml-0"
+		href="https://hackmd.io/@0sCkvgiFQNm2fLdxLu5M8g/bio"
+		target="_blank"
+		rel="noopener"
+	>
+		Bio
+	</a>
+	<a
+		class="mb-0 ml-2 cursor-pointer transition-colors duration-200 ease-in-out hover:text-primary hover:underline lg:mb-2 lg:ml-0"
+		href="https://nartc.me/feed.xml"
+		target="_blank"
+		rel="noopener"
+	>
+		RSS Feed
+	</a>
+</nav>

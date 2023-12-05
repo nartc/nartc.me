@@ -1,0 +1,13 @@
+---
+import { Image } from "astro:assets";
+import avatar from "../assets/speak.png";
+---
+
+<div class="relative mb-4 h-16 w-16" role="img" aria-label="Avatar of the Chau">
+	<div
+		class="avatar group relative flex h-full w-full items-center rounded-full border-4 border-transparent text-center"
+		data-tooltip="New version available 🚀"
+	>
+		<Image class="avatar" src={avatar} alt="avatar of chau" sizes="64px" />
+	</div>
+</div>
