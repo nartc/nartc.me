@@ -231,20 +231,20 @@ By adding an **Attribute Binding** and a **Property Binding** to our template, t
 
 > **Attribute Binding** isn't technically a correct term because there's no _"binding"_ with Attributes since they are static.
 
-- A new `consts` array is generated. Notice how our `data-dummy=chau` becomes `["data-dummy", "chau"]` and how it is in the `0` position of the `consts` array. `consts` holds more information than just Attribute Bindings but we will not get into that in this blog post.
-- `elementStart` call for `"span"` is invoked with an additional argument `0`. Notice how this is the same index as the `data-dummy=chau` attribute in the `consts` array. This means that Angular is able to set the attribute `data-dummy` to the `HTMLSpanElement`, **at the time the element is instantiated**, during the `Create` phase.
-- New instructions, `advance` and `property`, are generated in the `Update` phase.
-    - `advance` tells Angular to go to the `Node` with this index (i.e: `3`)
-    - `property` is responsible for **Property Binding**. Here, `property` is invoked with `"foo"` and `ctx.text` where `foo` is the name of our `ChildCmp` Input and `ctx.text` is `AppComponent.text` field.
+-   A new `consts` array is generated. Notice how our `data-dummy=chau` becomes `["data-dummy", "chau"]` and how it is in the `0` position of the `consts` array. `consts` holds more information than just Attribute Bindings but we will not get into that in this blog post.
+-   `elementStart` call for `"span"` is invoked with an additional argument `0`. Notice how this is the same index as the `data-dummy=chau` attribute in the `consts` array. This means that Angular is able to set the attribute `data-dummy` to the `HTMLSpanElement`, **at the time the element is instantiated**, during the `Create` phase.
+-   New instructions, `advance` and `property`, are generated in the `Update` phase.
+    -   `advance` tells Angular to go to the `Node` with this index (i.e: `3`)
+    -   `property` is responsible for **Property Binding**. Here, `property` is invoked with `"foo"` and `ctx.text` where `foo` is the name of our `ChildCmp` Input and `ctx.text` is `AppComponent.text` field.
 
 An important point to note is that `property` instruction is part of the `Update` phase which means that **Property Binding** does not happen until the `Update` phase. To many Angular developers, this is commonly known as _"when the Change Detection runs and updates the template's bindings"_. As a side note, we can connect this knowledge back to _"When is an Input resolved in Angular component?"_, it actually makes more sense now, doesn't it?
 
 ```ts
 @Component({
-    selector: 'my-cmp'
+    selector: "my-cmp",
 })
 export class MyCmp {
-    @Input() foo = 'initial';
+    @Input() foo = "initial";
 
     constructor() {
         console.log(this.foo); // logs "initial"
@@ -258,7 +258,7 @@ export class MyCmp {
 @Component({
     template: `
         <my-cmp [foo]="'from app component'" />
-    `
+    `,
 })
 export class AppCmp {}
 ```
@@ -614,8 +614,8 @@ you were able to learn something new and have fun learning it. See y'all in the 
 
 I humbly thank all these beautiful wonderful people for reviewing this blog post
 
-- [Enea Jahollari](https://twitter.com/Enea_Jahollari)
-- [Jason Warner](https://twitter.com/xocomil_1)
-- [Matthiew Riegler](https://twitter.com/Jean__Meche)
-- [Luis Castro Cabrera](https://twitter.com/LuisHCCDev)
-- [Josh Morony](https://twitter.com/joshuamorony)
+-   [Enea Jahollari](https://twitter.com/Enea_Jahollari)
+-   [Jason Warner](https://twitter.com/xocomil_1)
+-   [Matthiew Riegler](https://twitter.com/Jean__Meche)
+-   [Luis Castro Cabrera](https://twitter.com/LuisHCCDev)
+-   [Josh Morony](https://twitter.com/joshuamorony)
