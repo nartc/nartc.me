@@ -1,34 +1,24 @@
 ---
-import { getCollection } from "astro:content";
+import { getCollection, type CollectionEntry } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
 
 export async function getStaticPaths() {
 	const blogEntries = await getCollection("blogs");
 
-	type BlogEntry = (typeof blogEntries)[number];
+	const paths: Array<{
+		params: { slug: CollectionEntry<"blogs">["slug"] };
+		props: { entry: CollectionEntry<"blogs">; isProduction: boolean };
+	}> = [];
 
-	return blogEntries.reduce(
-		(acc, entry) => {
-			if (import.meta.env.DEV) {
-				acc.push({
-					params: { slug: entry.slug },
-					props: { entry, isProduction: false },
-				});
-			} else {
-				if (!entry.data.draft) {
-					acc.push({
-						params: { slug: entry.slug },
-						props: { entry, isProduction: true },
-					});
-				}
-			}
-			return acc;
-		},
-		[] as Array<{
-			params: { slug: BlogEntry["slug"] };
-			props: { entry: BlogEntry; isProduction: boolean };
-		}>,
-	);
+	for (const blogEntry of blogEntries) {
+		if (blogEntry.data.draft && import.meta.env.PROD) continue;
+		paths.push({
+			params: { slug: blogEntry.slug },
+			props: { entry: blogEntry, isProduction: import.meta.env.PROD },
+		});
+	}
+
+	return paths;
 }
 const { entry, isProduction } = Astro.props;
 const { Content } = await entry.render();
@@ -396,3 +386,5 @@ const { Content } = await entry.render();
 		}
 	}
 </style>
+ }
+
