@@ -1,9 +1,7 @@
 ---
 import { Image, type LocalImageProps } from "astro:assets";
 
-interface Props extends LocalImageProps {}
-
-const { height = 500, ...props } = Astro.props;
+const { height = 500, ...props } = Astro.props as any;
 ---
 
 <p>
