@@ -16,143 +16,143 @@ I'll walk you through the problem, the _seems to be_ solution, the solution, and
 declare function table(items: any[], fieldOptions: any[]): void;
 ```
 
--   We have a function that accepts some collection of `items` and a collection of `fieldOptions` that should be strongly
-    typed to the type of each individual `items`
+- We have a function that accepts some collection of `items` and a collection of `fieldOptions` that should be strongly
+  typed to the type of each individual `items`
 
-    ```ts
-    declare function table(items: any[], fieldOptions: any[]): void;
+  ```ts
+  declare function table(items: any[], fieldOptions: any[]): void;
 
-    const items = [
-        {
-            foo: "some foo",
-            bar: 123,
-        },
-        {
-            foo: "some foo two",
-            bar: 456,
-        },
-    ];
-    ```
+  const items = [
+  	{
+  		foo: "some foo",
+  		bar: 123,
+  	},
+  	{
+  		foo: "some foo two",
+  		bar: 456,
+  	},
+  ];
+  ```
 
--   From this usage, `items` has a type of `Array<{foo: string, bar: number}>` and `fieldOptions` needs to be strongly typed
-    against `{foo: string, bar: number}`. Usage of `table()` can be as follow
+- From this usage, `items` has a type of `Array<{foo: string, bar: number}>` and `fieldOptions` needs to be strongly typed
+  against `{foo: string, bar: number}`. Usage of `table()` can be as follow
 
-    ```ts
-    const items = [
-        {
-            foo: "some foo",
-            bar: 123,
-        },
-        {
-            foo: "some foo two",
-            bar: 456,
-        },
-    ];
+  ```ts
+  const items = [
+  	{
+  		foo: "some foo",
+  		bar: 123,
+  	},
+  	{
+  		foo: "some foo two",
+  		bar: 456,
+  	},
+  ];
 
-    table(items, [
-        "foo",
-        {
-            field: "bar",
-            mapFn: (val) => {
-                // should return something. eg: a string
-            },
-        },
-    ]);
-    ```
+  table(items, [
+  	"foo",
+  	{
+  		field: "bar",
+  		mapFn: (val) => {
+  			// should return something. eg: a string
+  		},
+  	},
+  ]);
+  ```
 
-    Here, we can see that `fieldOptions` can accept each key of `{foo: string, bar: number}`, aka `'foo' | 'bar'`. In addition,
-    `fieldOptions` can also accept a `FieldOption` object that has a `field: 'foo' | 'bar'` as well as `mapFn` callback that
-    will be invoked with the value at `{foo: string, bar: number}[key]`. In other words, when we pass `field: "bar"`, `mapFn`
-    then needs to have type: `(value: number) => string` because `bar` has `number` as its valuet type.
+  Here, we can see that `fieldOptions` can accept each key of `{foo: string, bar: number}`, aka `'foo' | 'bar'`. In addition,
+  `fieldOptions` can also accept a `FieldOption` object that has a `field: 'foo' | 'bar'` as well as `mapFn` callback that
+  will be invoked with the value at `{foo: string, bar: number}[key]`. In other words, when we pass `field: "bar"`, `mapFn`
+  then needs to have type: `(value: number) => string` because `bar` has `number` as its valuet type.
 
 ### The _"seems to be"_ Solution
 
 At first glance, it seems easy. We'll go through each step.
 
--   First, `table()` needs to accept a generic to capture the type of each item in `items` collection
+- First, `table()` needs to accept a generic to capture the type of each item in `items` collection
 
-    ```diff
-    - declare function table(items: any[], fieldOptions: any[]): void;
-    + declare function table<TItem>(items: TItem[], fieldOptions: any[]): void;
-    ```
+  ```diff
+  - declare function table(items: any[], fieldOptions: any[]): void;
+  + declare function table<TItem>(items: TItem[], fieldOptions: any[]): void;
+  ```
 
-    In addition, we also like to constraint `TItem` to an `object` so the consumers can only pass in a collection of
-    objects
+  In addition, we also like to constraint `TItem` to an `object` so the consumers can only pass in a collection of
+  objects
 
-    ```diff
-    - declare function table<TItem>(items: TItem[], fieldOptions: any[]): void;
-    + declare function table<TItem extends Record<string, unknown>>(items: TItem[], fieldOptions: any[]): void;
-    ```
+  ```diff
+  - declare function table<TItem>(items: TItem[], fieldOptions: any[]): void;
+  + declare function table<TItem extends Record<string, unknown>>(items: TItem[], fieldOptions: any[]): void;
+  ```
 
-    `TItem extends Record<string, unknown>` is the constraint
+  `TItem extends Record<string, unknown>` is the constraint
 
--   Second, we need a type for `fieldOptions`. This type needs to accept a generic that is an object so that we can
-    iterate through the object keys
+- Second, we need a type for `fieldOptions`. This type needs to accept a generic that is an object so that we can
+  iterate through the object keys
 
-    ```diff
-    + type FieldOption<TObject extends Record<string, unknown>> = keyof TObject | {
-    +     field: keyof TObject;
-    +     mapFn: (value: TObject[keyof TObject]) => string;
-    + }
+  ```diff
+  + type FieldOption<TObject extends Record<string, unknown>> = keyof TObject | {
+  +     field: keyof TObject;
+  +     mapFn: (value: TObject[keyof TObject]) => string;
+  + }
 
-    declare function table<TItem extends Record<string, unknown>>(
-        items: TItem[],
-    -   fieldOptions: any[],
-    +   fieldOptions: FieldOption<TItem>[]
-    ): void;
-    ```
+  declare function table<TItem extends Record<string, unknown>>(
+      items: TItem[],
+  -   fieldOptions: any[],
+  +   fieldOptions: FieldOption<TItem>[]
+  ): void;
+  ```
 
-    With the above type declaration, `FieldOption<{foo: string, bar: number}` is as follow
+  With the above type declaration, `FieldOption<{foo: string, bar: number}` is as follow
 
-    ```ts
-    type Test = FieldOption<{ foo: string; bar: number }>;
-    //    ^?    'foo' |
-    //          'bar' |
-    //          {
-    //              field: 'foo' | 'bar';
-    //              mapFn: (value: string | number) => string;
-    //          }
-    //
-    ```
+  ```ts
+  type Test = FieldOption<{ foo: string; bar: number }>;
+  //    ^?    'foo' |
+  //          'bar' |
+  //          {
+  //              field: 'foo' | 'bar';
+  //              mapFn: (value: string | number) => string;
+  //          }
+  //
+  ```
 
--   This _seems_ correct but when we apply it, we find that the type isn't as strict as we like
+- This _seems_ correct but when we apply it, we find that the type isn't as strict as we like
 
-    ```ts
-    const items = [{ foo: "some foo", bar: 123 }];
+  ```ts
+  const items = [{ foo: "some foo", bar: 123 }];
 
-    table(items, [
-        {
-            field: "foo",
-            mapFn: (value) => {
-                // ^? value: string | number
-            },
-        },
-    ]);
-    ```
+  table(items, [
+  	{
+  		field: "foo",
+  		mapFn: (value) => {
+  			// ^? value: string | number
+  		},
+  	},
+  ]);
+  ```
 
-    We like for `value` to have type of `string` instead of a union `string | number` because we specify the `"foo"`
-    for `field`. Hence, `{foo: string, bar: number}['foo']` should be `string`
+  We like for `value` to have type of `string` instead of a union `string | number` because we specify the `"foo"`
+  for `field`. Hence, `{foo: string, bar: number}['foo']` should be `string`
 
--   The problem is that TypeScript cannot narrow down `mapFn` from `field` because we cannot constraint them the way
-    we currently have our type. Our next step is to try having `keyof TItem` as a generic as well hoping that TypeScript
-    can infer it from `field`
+- The problem is that TypeScript cannot narrow down `mapFn` from `field` because we cannot constraint them the way
+  we currently have our type. Our next step is to try having `keyof TItem` as a generic as well hoping that TypeScript
+  can infer it from `field`
 
-    ```ts
-    type FieldOption<
-        TItem extends Record<string, unknown>,
-        TKey extends keyof TItem = keyof TItem,
-    > =
-        | TKey
-        | {
-              field: TKey;
-              mapFn: (value: TKey) => string;
-          };
-    ```
+  ```ts
+  type FieldOption<
+  	TItem extends Record<string, unknown>,
+  	TKey extends keyof TItem = keyof TItem,
+  > =
+  	| TKey
+  	| {
+  			field: TKey;
+  			mapFn: (value: TKey) => string;
+  	  };
+  ```
 
-    But it still won't work because we can never pass a generic in for `TKey` and `TKey` is always defaulted to `keyof TItem`
-    which will always be `'foo' | 'bar'` for our `{foo: string, bar: number}` item type. So as of this moment, we're stuck.
+  But it still won't work because we can never pass a generic in for `TKey` and `TKey` is always defaulted to `keyof TItem`
+  which will always be `'foo' | 'bar'` for our `{foo: string, bar: number}` item type. So as of this moment, we're stuck.
 
-    > We spent a good 15-20 minutes trying things out but to no avail.
+  > We spent a good 15-20 minutes trying things out but to no avail.
 
 ### The Solution
 
@@ -167,20 +167,20 @@ but in reality, what we actually need is as follow
 
 // what we think we need
 type FieldOption = {
-    field: "foo" | "bar";
-    mapFn: (value: string | number) => string;
+	field: "foo" | "bar";
+	mapFn: (value: string | number) => string;
 };
 
 // what we actually need
 type FieldOption =
-    | {
-          field: "foo";
-          mapFn: (value: string) => string;
-      }
-    | {
-          field: "bar";
-          mapFn: (value: number) => string;
-      };
+	| {
+			field: "foo";
+			mapFn: (value: string) => string;
+	  }
+	| {
+			field: "bar";
+			mapFn: (value: number) => string;
+	  };
 ```
 
 Yes, we need a **Mapped Union** from our `TItem` instead of a single object with **union** properties. The question is how we
@@ -190,10 +190,10 @@ get to the **Mapped Union**. Well, it is a 2-step process
 
 ```ts
 type FieldOption<TItem extends Record<string, unknown>> = {
-    [TField in keyof TItem]: {
-        field: TField;
-        mapFn: (value: TItem[TField]) => string;
-    };
+	[TField in keyof TItem]: {
+		field: TField;
+		mapFn: (value: TItem[TField]) => string;
+	};
 };
 
 type Test = FieldOption<{ foo: string; bar: number }>;
@@ -207,10 +207,10 @@ type Test = FieldOption<{ foo: string; bar: number }>;
 
 ```ts
 type FieldOption<TItem extends Record<string, unknown>> = {
-    [TField in keyof TItem]: {
-        field: TField;
-        mapFn: (value: TItem[TField]) => string;
-    };
+	[TField in keyof TItem]: {
+		field: TField;
+		mapFn: (value: TItem[TField]) => string;
+	};
 }[keyof TItem];
 
 type Test = FieldOption<{ foo: string; bar: number }>;
@@ -222,39 +222,39 @@ Now, let's try using `table()` with our **Mapped Union** type to see if it works
 
 ```ts
 type FieldOption<TItem extends Record<string, unknown>> =
-    | keyof TItem
-    | {
-          [TField in keyof TItem]: {
-              field: TField;
-              mapFn: (value: TITem[TField]) => string;
-          };
-      }[keyof TItem];
+	| keyof TItem
+	| {
+			[TField in keyof TItem]: {
+				field: TField;
+				mapFn: (value: TITem[TField]) => string;
+			};
+	  }[keyof TItem];
 
 declare function table<TItem extends Record<string, unknown>>(
-    items: TTem[],
-    fields: FieldOption<TItem>[],
+	items: TTem[],
+	fields: FieldOption<TItem>[],
 ): void;
 
 const items = [
-    { foo: "string", bar: 123 },
-    { foo: "string2", bar: 1234 },
+	{ foo: "string", bar: 123 },
+	{ foo: "string2", bar: 1234 },
 ];
 
 table(items, [
-    {
-        field: "foo",
-        mapFn: (value) => {
-            //  ^? value: string
-            return "";
-        },
-    },
-    {
-        field: "bar",
-        mapFn: (value) => {
-            //  ^? value: number
-            return "";
-        },
-    },
+	{
+		field: "foo",
+		mapFn: (value) => {
+			//  ^? value: string
+			return "";
+		},
+	},
+	{
+		field: "bar",
+		mapFn: (value) => {
+			//  ^? value: number
+			return "";
+		},
+	},
 ]);
 ```
 

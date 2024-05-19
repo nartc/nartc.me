@@ -18,8 +18,8 @@ To set up some context for this post, here's a typical `SharedModule`
 
 ```ts
 @NgModule({
-    declarations: [ComponentA, ComponentB, ComponentC, ComponentD],
-    exports: [ComponentA, ComponentB, ComponentC, ComponentD],
+	declarations: [ComponentA, ComponentB, ComponentC, ComponentD],
+	exports: [ComponentA, ComponentB, ComponentC, ComponentD],
 })
 export class SharedModule {}
 ```
@@ -28,8 +28,8 @@ Or more than often, we usually have a `SharedModule` for re-exporting 3rd party 
 
 ```ts
 @NgModule({
-    imports: [MatButtonModule, MatTableModule, MatCardModule],
-    exports: [MatButtonModule, MatTableModule, MatCardModule],
+	imports: [MatButtonModule, MatTableModule, MatCardModule],
+	exports: [MatButtonModule, MatTableModule, MatCardModule],
 })
 export class SharedMaterialModule {}
 ```
@@ -41,16 +41,16 @@ Now that we have an idea of what `SharedModule` is, let's explore why `SharedMod
 
 ### Problem
 
--   Lazy-load `FooModule`
--   Lazy-load `BarModule`
--   `SharedModule` declares `SharedAComponent` and `SharedBComponent`
--   `FooModule` uses `SharedAComponent` by importing `SharedModule`
--   `BarModule` uses `SharedBComponent` by importing `SharedModule`
+- Lazy-load `FooModule`
+- Lazy-load `BarModule`
+- `SharedModule` declares `SharedAComponent` and `SharedBComponent`
+- `FooModule` uses `SharedAComponent` by importing `SharedModule`
+- `BarModule` uses `SharedBComponent` by importing `SharedModule`
 
 <BlogImage
-    sizes="960px"
-    src={sharedModuleOne}
-    alt="A screenshot showing bundlesize of FooModule, BarModule, and SharedModule"
+	sizes="960px"
+	src={sharedModuleOne}
+	alt="A screenshot showing bundlesize of FooModule, BarModule, and SharedModule"
 />
 
 From Screenshot 1, we can see that `SharedModule` is separated into its own chunk. This makes the size of `FooModule` and `BarModule` small, which appears to be a good thing.
@@ -66,9 +66,9 @@ This is **wasted**! Imagine having EVERY _shared_ components in `SharedModule`, 
 The easiest solution is to apply **Single-Component-as-Module** (or **SCAM**) here for `SharedAComponent` and `SharedBComponent`. Learn more about [SCAM](https://blog.angularindepth.com/emulating-tree-shakable-components-using-single-component-angular-modules-5e3d380364ea)
 
 <BlogImage
-    sizes="960px"
-    src={sharedModuleTwo}
-    alt="A screenshot showing bundlesize of FooModule, BarModule, with two SCAMs"
+	sizes="960px"
+	src={sharedModuleTwo}
+	alt="A screenshot showing bundlesize of FooModule, BarModule, with two SCAMs"
 />
 
 After we apply **SCAM** to the two shared components, we will end up with Screenshot 2. `FooModule` bundle size is getting slightly larger because `SharedAModule` is bundled together with it (the same applies to `BarModule` and `SharedBModule`).
@@ -78,19 +78,19 @@ However, when our users land on `FooModule`, we will truly only load what the us
 
 This scenario is somewhat _out of our control_ but we will explore it as well.
 
--   Only `FooModule` utilizes `FormsModule`
--   Both `FooModule` and `BarModule` utilize `FormsModule`
+- Only `FooModule` utilizes `FormsModule`
+- Both `FooModule` and `BarModule` utilize `FormsModule`
 
 <BlogImage
-    sizes="960px"
-    src={sharedModuleThree}
-    alt="A screenshot showing bundlesize of FooModule and FormsModule"
+	sizes="960px"
+	src={sharedModuleThree}
+	alt="A screenshot showing bundlesize of FooModule and FormsModule"
 />
 
 <BlogImage
-    sizes="960px"
-    src={sharedModuleFour}
-    alt="A screenshot showing bundlesize of FooModule, BarModule, and FormsModule"
+	sizes="960px"
+	src={sharedModuleFour}
+	alt="A screenshot showing bundlesize of FooModule, BarModule, and FormsModule"
 />
 
 Here, you can see that if only `FooModule` needs `FormsModule`, then Angular will know to include `FormsModule` together with `FooModule` bundle, so that if our users land on `BarModule`, we don't need to load `FormsModule` for them. (Screenshot 3)

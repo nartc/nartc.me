@@ -27,14 +27,14 @@ When working on 3D projects, it is commonly, if not always, involving running an
 
 ```ts
 function animate() {
-    // schedule the animate function in a animation loop
-    requestAnimationFrame(animate);
+	// schedule the animate function in a animation loop
+	requestAnimationFrame(animate);
 
-    // change the properties of the 3D object bit by bit on every frame (before render step)
-    cube.rotation.x += 0.01;
+	// change the properties of the 3D object bit by bit on every frame (before render step)
+	cube.rotation.x += 0.01;
 
-    // then render the scene
-    renderer.render(scene, camera);
+	// then render the scene
+	renderer.render(scene, camera);
 }
 
 // starts the render
@@ -45,15 +45,15 @@ In Angular Three, the _naive_ way of opting into the Animation Loop is as follow
 
 ```ts
 export class Model {
-    #store = injectNgtStore();
-    #destroyRef = inject(DestroyRef);
+	#store = injectNgtStore();
+	#destroyRef = inject(DestroyRef);
 
-    constructor() {
-        const unsubscribe = this.#store.get("internal").subscribe(() => {
-            /* before render logic */
-        });
-        this.#destroyRef.onDestroy(unsubscribe);
-    }
+	constructor() {
+		const unsubscribe = this.#store.get("internal").subscribe(() => {
+			/* before render logic */
+		});
+		this.#destroyRef.onDestroy(unsubscribe);
+	}
 }
 ```
 
@@ -89,28 +89,28 @@ Let's see how we can do it without `injectNgtsGLTFLoader`
 
 ```ts
 export class Car {
-    #gltfLoader = new GLTFLoader();
-    // Optional: Provide a DRACOLoader instance to decode compressed mesh data
-    #dracoLoader = new DRACOLoader();
+	#gltfLoader = new GLTFLoader();
+	// Optional: Provide a DRACOLoader instance to decode compressed mesh data
+	#dracoLoader = new DRACOLoader();
 
-    #model = signal<GLTF | null>(null);
-    scene = computed(() => this.#model()?.scene);
+	#model = signal<GLTF | null>(null);
+	scene = computed(() => this.#model()?.scene);
 
-    constructor() {
-        this.#dracoLoader.setDecoderPath("/examples/jsm/libs/draco/");
-        this.#gltfLoader.setDRACOLoader(this.#dracoLoader);
+	constructor() {
+		this.#dracoLoader.setDecoderPath("/examples/jsm/libs/draco/");
+		this.#gltfLoader.setDRACOLoader(this.#dracoLoader);
 
-        this.#gltfLoader.load("assets/car.glb", (gltf) => {
-            this.#model.set(gltf);
-        });
-    }
+		this.#gltfLoader.load("assets/car.glb", (gltf) => {
+			this.#model.set(gltf);
+		});
+	}
 }
 ```
 
 It is not bad but there are couple of things that are lacking:
 
--   What if `assets/car.glb` was dynamic (via `Input`)?
--   `gltf` contains more information than just the `scene`. Like `animations` that the GLTF model has. How can we run those animations?
+- What if `assets/car.glb` was dynamic (via `Input`)?
+- `gltf` contains more information than just the `scene`. Like `animations` that the GLTF model has. How can we run those animations?
 
 Not to mention, we need to do the same thing for different models components in our 3D projects. Well, `injectNgtsGLTFLoader` solves
 _all_ (maybe) the problems. Let's take a look
@@ -138,21 +138,21 @@ export class Car {
 
 `injectNgtsGLTFLoader` does several things underneath:
 
--   Create a `Signal` to store the 3D model data
--   Set up an `effect` to re-fetch if the input changes
-    -   Support Array input, Directory input, or single input
--   Allow consumers to specify whether they want to use `DRACOLoader` and/or `MeshoptDecoder`
--   Support for preloading external assets **OUTSIDE** of Angular building blocks
+- Create a `Signal` to store the 3D model data
+- Set up an `effect` to re-fetch if the input changes
+  - Support Array input, Directory input, or single input
+- Allow consumers to specify whether they want to use `DRACOLoader` and/or `MeshoptDecoder`
+- Support for preloading external assets **OUTSIDE** of Angular building blocks
 
-    ```ts
-    injectNgtsGLTFLoader.preload(() => "assets/car.glb");
+  ```ts
+  injectNgtsGLTFLoader.preload(() => "assets/car.glb");
 
-    @Component({})
-    export class Car {
-        #model = injectNgtsGLTFLoader(() => "assets/car.glb");
-        scene = computed(() => this.#model()?.scene);
-    }
-    ```
+  @Component({})
+  export class Car {
+  	#model = injectNgtsGLTFLoader(() => "assets/car.glb");
+  	scene = computed(() => this.#model()?.scene);
+  }
+  ```
 
 In addition, the base `injectNgtLoader()` (which `injectNgtsGLTFLoader` utilizes) handles in-memory cache so the consumers
 don't have to load the same asset twice.
@@ -170,10 +170,10 @@ Code: [https://github.com/angular-threejs/angular-three/blob/platform/libs/soba/
 As we can see from the GIF (I hope you could see it 😛), there are quite a few things that are happenning
 when we deal with Physics
 
--   The physics engine itself (i.e: `cannonjs`)
--   Attaching the 3D objects (the cubes and planes) to the Body in the Cannon World
--   Reacting to inputs like `debug` and `gravity` etc.
--   Expose APIs to update the properties of the Body in the Cannon World (via Web Worker)
+- The physics engine itself (i.e: `cannonjs`)
+- Attaching the 3D objects (the cubes and planes) to the Body in the Cannon World
+- Reacting to inputs like `debug` and `gravity` etc.
+- Expose APIs to update the properties of the Body in the Cannon World (via Web Worker)
 
 Without `injectBody()`, the amount of code we need to tie 3D objects to the Cannon World would be tremendous and repetitive.
 
@@ -183,8 +183,8 @@ Code: [https://github.com/angular-threejs/angular-three/blob/platform/libs/canno
 
 Above is my 3 favorite CIFs in `angular-three`. There are various other CIFs in `angular-three` but the concept they share is very similar:
 
--   Compose other CIFs
--   Make use of APIs that rely on the Injection Context (i.e: `inject`, `effect`)
--   Are friendly with Signals. They accept Signals and return Signals
+- Compose other CIFs
+- Make use of APIs that rely on the Injection Context (i.e: `inject`, `effect`)
+- Are friendly with Signals. They accept Signals and return Signals
 
 Do you have a favorite CIF or do you have something that could be turned into a CIF? I would love to know! Thanks for reading.

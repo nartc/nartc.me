@@ -27,20 +27,20 @@ Next, we can provide values for this token
 ```ts
 // application wise
 bootstrapApplication(AppComponent, {
-    providers: [{ provide: BASE_URL, useValue: "http://base.url" }],
+	providers: [{ provide: BASE_URL, useValue: "http://base.url" }],
 });
 
 // route (sub-tree)
 const routes: Routes = [
-    {
-        path: "",
-        providers: [{ provide: BASE_URL, useValue: "http://route-base.url" }],
-    },
+	{
+		path: "",
+		providers: [{ provide: BASE_URL, useValue: "http://route-base.url" }],
+	},
 ];
 
 // component/directive
 @Component({
-    providers: [{ provide: BASE_URL, useValue: "http://component-base.url" }],
+	providers: [{ provide: BASE_URL, useValue: "http://component-base.url" }],
 })
 export class MyCmp {}
 ```
@@ -50,7 +50,7 @@ Finally, we can consume this token
 ```ts
 @Component({})
 export class MyCmp {
-    baseUrl = inject(BASE_URL); // string
+	baseUrl = inject(BASE_URL); // string
 }
 ```
 
@@ -92,7 +92,7 @@ export const BASE_URL = new InjectionToken<string>("Base URL");
 
 //                                      👇 Enforce value type constraints
 export function provideBaseUrl(value: string) {
-    return { provide: BASE_URL, useValue: value };
+	return { provide: BASE_URL, useValue: value };
 }
 ```
 
@@ -100,10 +100,10 @@ With this approach, consumers now have a clear and type-safe way to provide valu
 
 ```ts
 bootstrapApplication(AppComponent, {
-    providers: [
-        provideBaseUrl("http://base.url"),
-        provideBaseUrl(123), // a value other than `string` will surface as a compilation error
-    ],
+	providers: [
+		provideBaseUrl("http://base.url"),
+		provideBaseUrl(123), // a value other than `string` will surface as a compilation error
+	],
 });
 ```
 
@@ -121,10 +121,10 @@ To address this issue, we can employ our custom provide function:
 
 ```ts
 export function provideBaseUrl(url: string | (() => string)) {
-    return {
-        provide: BASE_URL,
-        useFactory: typeof url === "function" ? url : () => url,
-    };
+	return {
+		provide: BASE_URL,
+		useFactory: typeof url === "function" ? url : () => url,
+	};
 }
 ```
 
@@ -133,15 +133,15 @@ With this custom function, providing values for `BASE_URL` becomes more type-saf
 ```ts
 provideBaseUrl("http://raw.value.url");
 provideBaseUrl(() => {
-    // Note: We can utilize DI in here via `inject()`
-    return "http://factory.value.url";
+	// Note: We can utilize DI in here via `inject()`
+	return "http://factory.value.url";
 });
 ```
 
 However, the real challenge arises from the varying providers that Angular's DI can accept, such as
 
--   `useFactory` with `deps`. `Provider` interface will not enforce the dependencies for a `useFactory`
--   `multi` token. Handling the `multi` token use-case is tricky because the `InjectionToken` type differs from the value provider type
+- `useFactory` with `deps`. `Provider` interface will not enforce the dependencies for a `useFactory`
+- `multi` token. Handling the `multi` token use-case is tricky because the `InjectionToken` type differs from the value provider type
 
 Adapting our custom provide function to handle these different cases can become a constant task.
 
@@ -151,16 +151,16 @@ The `InjectionToken` provides more flexibility than just using `new InjectionTok
 
 ```ts
 export const BASE_URL = new InjectionToken("Base URL", {
-    factory: () => {
-        return "http://default.url";
-    },
+	factory: () => {
+		return "http://default.url";
+	},
 });
 ```
 
 When a **factory function** is provided, it introduces two key characteristics to the token:
 
--   `BASE_URL` is provided in the Root Injector by default (i.e: `providedIn: 'root'`). This effectively makes `BASE_URL` a [Tree-shakable Token](https://angular.io/api/core/InjectionToken#tree-shakable-injectiontoken)
--   We can consume `BASE_URL` without the need to explicitly provide a value for it if we utilize DI in the factory function to access other dynamic values.
+- `BASE_URL` is provided in the Root Injector by default (i.e: `providedIn: 'root'`). This effectively makes `BASE_URL` a [Tree-shakable Token](https://angular.io/api/core/InjectionToken#tree-shakable-injectiontoken)
+- We can consume `BASE_URL` without the need to explicitly provide a value for it if we utilize DI in the factory function to access other dynamic values.
 
 A few months back, I penned a [(hot take) blog post on using `InjectionToken` as a Service](/blog/injection-token-service) and have since implemented this approach in various libraries. Throughout this journey, I've experienced the challenges of utilizing `InjectionToken` and, more notably, explaining its advanced usages to others.
 
@@ -174,7 +174,7 @@ To simplify the usage of nearly all `InjectionToken` instances across my project
 
 ```ts
 export const [injectFn, provideFn, TOKEN] = createInjectionToken(
-    () => "root factory",
+	() => "root factory",
 );
 ```
 
@@ -182,7 +182,7 @@ By default, `createInjectionToken` creates a root token. The consumers can immed
 
 ```ts
 export class MyCmp {
-    value = injectFn(); // string
+	value = injectFn(); // string
 }
 ```
 
@@ -190,8 +190,8 @@ export class MyCmp {
 
 ```ts
 export const [injectFn, provideFn, TOKEN] = createInjectionToken(
-    () => "non root factory",
-    { isRoot: false },
+	() => "non root factory",
+	{ isRoot: false },
 );
 ```
 
@@ -199,11 +199,11 @@ To create a non-root token, pass `isRoot: false` to the 2nd argument of `createI
 
 ```ts
 @Component({
-    //              👇 automatically use the factory function
-    providers: [provideFn()],
+	//              👇 automatically use the factory function
+	providers: [provideFn()],
 })
 export class MyCmp {
-    value = injectFn(); // string
+	value = injectFn(); // string
 }
 ```
 
@@ -219,8 +219,8 @@ Furthermore, `injectFn` offers a high degree of type-safety by accepting an `Inj
 
 ```ts
 export class MyCmp {
-    value = injectFn({ self: true }); // string
-    parentValue = injectFn({ skipSelf: true, optional: true }); // string | null
+	value = injectFn({ self: true }); // string
+	parentValue = injectFn({ skipSelf: true, optional: true }); // string | null
 }
 ```
 
@@ -228,11 +228,11 @@ Importantly, `injectFn` is equipped to handle the subtleties of the **Injection 
 
 ```ts
 export class MyCmp {
-    injector = inject(Injector);
+	injector = inject(Injector);
 
-    ngOnInit() {
-        const baseUrl = injectFn({ injector: this.injector }); // Functions seamlessly, returning a string
-    }
+	ngOnInit() {
+		const baseUrl = injectFn({ injector: this.injector }); // Functions seamlessly, returning a string
+	}
 }
 ```
 
@@ -244,12 +244,12 @@ This comprehensive functionality enhances both usability and type safety.
 export const [injectDep, provideDep, DEP] = createInjectionToken(() => 1);
 
 export const [injectFn, provideFn, TOKEN] = createInjectionToken(
-    (dep: number) => dep * 2,
-    //        👇 This is strongly typed based on the parameters of the factory function
-    { deps: [DEP] },
-    // { deps: [] }, // Compilation error
-    // { deps: [OTHER_DEP_THAT_IS_NOT_NUMBER] }, // Compilation error
-    // { deps: [DEP, SOME_OTHER_DEP] }, // Compilation error
+	(dep: number) => dep * 2,
+	//        👇 This is strongly typed based on the parameters of the factory function
+	{ deps: [DEP] },
+	// { deps: [] }, // Compilation error
+	// { deps: [OTHER_DEP_THAT_IS_NOT_NUMBER] }, // Compilation error
+	// { deps: [DEP, SOME_OTHER_DEP] }, // Compilation error
 );
 ```
 
@@ -257,7 +257,7 @@ You can create a token that depends on other tokens by simply configuring the fa
 
 ```ts
 export class MyCmp {
-    value = injectFn(); // 2 (1 * 2)
+	value = injectFn(); // 2 (1 * 2)
 }
 ```
 
@@ -265,10 +265,10 @@ When `isRoot` is set to `false`, consumers must first provide the value using `p
 
 ```ts
 @Component({
-    providers: [provideDep(5), provideFn()],
+	providers: [provideDep(5), provideFn()],
 })
 export class MyCmp {
-    value = injectFn(); // 10
+	value = injectFn(); // 10
 }
 ```
 
@@ -278,7 +278,7 @@ This approach allows you to create tokens with dependencies while maintaining st
 
 ```ts
 export const [injectLocales, provideLocale] = createInjectionToken(() => "en", {
-    multi: true,
+	multi: true,
 });
 ```
 
@@ -286,14 +286,14 @@ By setting `multi` to `true`, we've defined a `multi` token. When `multi` is ena
 
 ```ts
 @Component({
-    providers: [
-        provideLocale(), // Provides the first value using the factory function
-        provideLocale("es"), // Provides the second value. Note that it accepts a string instead of a string[]
-        provideLocale(() => "fr"), // Provides the third value using a factory function
-    ],
+	providers: [
+		provideLocale(), // Provides the first value using the factory function
+		provideLocale("es"), // Provides the second value. Note that it accepts a string instead of a string[]
+		provideLocale(() => "fr"), // Provides the third value using a factory function
+	],
 })
 export class MyCmp {
-    locales = injectLocales(); // ['en', 'es', 'fr']
+	locales = injectLocales(); // ['en', 'es', 'fr']
 }
 ```
 

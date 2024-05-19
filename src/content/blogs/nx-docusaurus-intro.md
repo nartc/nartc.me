@@ -12,10 +12,10 @@ Repost from: [Easy Documentation with Docusaurus](https://medium.com/m/global-id
 
 Docusaurus is a Static Site Generator (SSG) solution that allows us to build beautiful documentation sites with the least amount of effort. Powered by React and its rich ecosystem, Docusaurus comes with a complete feature set:
 
--   CLI tool to initialize a Docusaurus application
--   Markdown / MDX support
--   Feature-packed templates
--   Advanced features like Versioning, i18n, Search, and Theming
+- CLI tool to initialize a Docusaurus application
+- Markdown / MDX support
+- Feature-packed templates
+- Advanced features like Versioning, i18n, Search, and Theming
 
 Learn more about Docusaurus at: [https://docusaurus.io/docs](https://docusaurus.io/docs)
 
@@ -77,8 +77,8 @@ npx create-docusaurus docs classics apps/
 
 From here, we can `cd apps/docs` and run the scripts to `start` or `build` our Docusaurus application. This approach does come with a couple of hiccups:
 
--   We always have to remember to `cd apps/docs` to do anything with our Docusaurus application
--   We do not take advantage of Nx caching mechanism and task orchestration.
+- We always have to remember to `cd apps/docs` to do anything with our Docusaurus application
+- We do not take advantage of Nx caching mechanism and task orchestration.
 
 With the current setup, we can integrate Docusaurus with Nx with one small configuration. Open up `workspace.json` and add the following
 
@@ -243,7 +243,7 @@ We did it! We finally have a great documentation solution for our library, provi
 
 Here are the things that we covered:
 
--   How to generate an Nx Workspace and add a React library from scratch
--   How to add a Docusaurus application in our Nx Workspace using `create-docusaurus`
--   How to configure Nx with Docusaurus for discoverability and cache-ability
--   How to use the Docusaurus community plugin instead of `create-docusaurus`
+- How to generate an Nx Workspace and add a React library from scratch
+- How to add a Docusaurus application in our Nx Workspace using `create-docusaurus`
+- How to configure Nx with Docusaurus for discoverability and cache-ability
+- How to use the Docusaurus community plugin instead of `create-docusaurus`

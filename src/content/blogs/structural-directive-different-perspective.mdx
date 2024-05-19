@@ -21,9 +21,9 @@ First of all, I'm the maintainer of [angular-three](https://github.com/angular-t
 
 Secondly, `angular-three` has gone through several iterations with different implementations:
 
--   Wrappers with Components and Directives
--   Proxied constructors with Directives
--   Custom Renderer.
+- Wrappers with Components and Directives
+- Proxied constructors with Directives
+- Custom Renderer.
 
 > Although a bit old, you can read more about the `Renderer` concept in this [blog post by Victor Savkin](https://blog.nrwl.io/experiments-with-angular-renderers-c5f647d4fd9e)
 
@@ -44,10 +44,10 @@ import * as THREE from "three";
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000,
+	75,
+	window.innerWidth / window.innerHeight,
+	0.1,
+	1000,
 );
 
 const renderer = new THREE.WebGLRenderer();
@@ -62,12 +62,12 @@ scene.add(cube);
 camera.position.z = 5;
 
 function animate() {
-    requestAnimationFrame(animate);
+	requestAnimationFrame(animate);
 
-    cube.rotation.x += 0.01;
-    cube.rotation.y += 0.01;
+	cube.rotation.x += 0.01;
+	cube.rotation.y += 0.01;
 
-    renderer.render(scene, camera);
+	renderer.render(scene, camera);
 }
 
 animate();
@@ -75,8 +75,8 @@ animate();
 
 Here, we can see THREE.js needs to have:
 
--   A `Scene`, a `Camera`, and a `Renderer`: these are used to actually render our Scene Graph in an animation loop.
--   Objects that can go onto the `Scene`: in this case, it is a `Mesh` with a `BoxGeometry` and a `MeshBasicMaterial`
+- A `Scene`, a `Camera`, and a `Renderer`: these are used to actually render our Scene Graph in an animation loop.
+- Objects that can go onto the `Scene`: in this case, it is a `Mesh` with a `BoxGeometry` and a `MeshBasicMaterial`
 
 We will not dive too deep into THREE.js in this blog post but we need at least this basic understanding to digest the next sections. From the above snippet, let's take a closer look at the following:
 
@@ -86,15 +86,15 @@ const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
 const cube = new THREE.Mesh(geometry, material);
 ```
 
--   Geometries in THREE.js accept positional parameters (i.e: construction arguments). These parameters are sent to the GPU to build up the vertices that determine the shape of this object.
-    `new THREE.BoxGeometry(1, 1, 1)` tells the GPU to build a cube with `[width: 1, height: 1, depth: 1]`.
--   Materials in THREE.js accept object paramters. These parameters are sent to the shader on every frame so they are safe to be dynamically updated anytime.
-    ```js
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    // is pretty much the same as
-    const material = new THREE.MeshBasicMaterial();
-    material.color.setHex(0x00ff00);
-    ```
+- Geometries in THREE.js accept positional parameters (i.e: construction arguments). These parameters are sent to the GPU to build up the vertices that determine the shape of this object.
+  `new THREE.BoxGeometry(1, 1, 1)` tells the GPU to build a cube with `[width: 1, height: 1, depth: 1]`.
+- Materials in THREE.js accept object paramters. These parameters are sent to the shader on every frame so they are safe to be dynamically updated anytime.
+  ```js
+  const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+  // is pretty much the same as
+  const material = new THREE.MeshBasicMaterial();
+  material.color.setHex(0x00ff00);
+  ```
 
 Next, let's talk about `angular-three`
 
@@ -106,10 +106,10 @@ For the above THREE.js example, here's how it'd **partially** look like in `angu
 
 ```html
 <ngt-mesh>
-    <!-- notice no construction arguments for now -->
-    <ngt-box-geometry />
-    <!-- notice no parameters for now -->
-    <ngt-mesh-basic-material />
+	<!-- notice no construction arguments for now -->
+	<ngt-box-geometry />
+	<!-- notice no parameters for now -->
+	<ngt-mesh-basic-material />
 </ngt-mesh>
 ```
 
@@ -174,8 +174,8 @@ By default, an Angular CLI application is bootstraped by `@angular/platform-brow
 
 With that out of the way, let's take a closer look at the first parameter of the compiled template function, `rf`. `rf` stands for [`RenderFlags`](https://github.com/angular/angular/blob/main/packages/core/src/render3/interfaces/definition.ts#L57), which has 2 values `Create` and `Update`.
 
--   `rf & 1` check is when the component is in `Create` phase. No bindings happen in this phase.
--   `rf & 2` check is when the component is in `Update` phase. Bindings happen in this phase. Upon Change Detection's tick, the template function is re-invoked with `RenderFlags.Update` as the value for `rf` which satisfies the `rf & 2` check. Consequently, this re-invokes the Template Instructions responsible for the bindings on our template.
+- `rf & 1` check is when the component is in `Create` phase. No bindings happen in this phase.
+- `rf & 2` check is when the component is in `Update` phase. Bindings happen in this phase. Upon Change Detection's tick, the template function is re-invoked with `RenderFlags.Update` as the value for `rf` which satisfies the `rf & 2` check. Consequently, this re-invokes the Template Instructions responsible for the bindings on our template.
 
 Additionally, let's add some bindings to our template.
 
@@ -231,34 +231,34 @@ By adding an **Attribute Binding** and a **Property Binding** to our template, t
 
 > **Attribute Binding** isn't technically a correct term because there's no _"binding"_ with Attributes since they are static.
 
--   A new `consts` array is generated. Notice how our `data-dummy=chau` becomes `["data-dummy", "chau"]` and how it is in the `0` position of the `consts` array. `consts` holds more information than just Attribute Bindings but we will not get into that in this blog post.
--   `elementStart` call for `"span"` is invoked with an additional argument `0`. Notice how this is the same index as the `data-dummy=chau` attribute in the `consts` array. This means that Angular is able to set the attribute `data-dummy` to the `HTMLSpanElement`, **at the time the element is instantiated**, during the `Create` phase.
--   New instructions, `advance` and `property`, are generated in the `Update` phase.
-    -   `advance` tells Angular to go to the `Node` with this index (i.e: `3`)
-    -   `property` is responsible for **Property Binding**. Here, `property` is invoked with `"foo"` and `ctx.text` where `foo` is the name of our `ChildCmp` Input and `ctx.text` is `AppComponent.text` field.
+- A new `consts` array is generated. Notice how our `data-dummy=chau` becomes `["data-dummy", "chau"]` and how it is in the `0` position of the `consts` array. `consts` holds more information than just Attribute Bindings but we will not get into that in this blog post.
+- `elementStart` call for `"span"` is invoked with an additional argument `0`. Notice how this is the same index as the `data-dummy=chau` attribute in the `consts` array. This means that Angular is able to set the attribute `data-dummy` to the `HTMLSpanElement`, **at the time the element is instantiated**, during the `Create` phase.
+- New instructions, `advance` and `property`, are generated in the `Update` phase.
+  - `advance` tells Angular to go to the `Node` with this index (i.e: `3`)
+  - `property` is responsible for **Property Binding**. Here, `property` is invoked with `"foo"` and `ctx.text` where `foo` is the name of our `ChildCmp` Input and `ctx.text` is `AppComponent.text` field.
 
 An important point to note is that `property` instruction is part of the `Update` phase which means that **Property Binding** does not happen until the `Update` phase. To many Angular developers, this is commonly known as _"when the Change Detection runs and updates the template's bindings"_. As a side note, we can connect this knowledge back to _"When is an Input resolved in Angular component?"_, it actually makes more sense now, doesn't it?
 
 ```ts
 @Component({
-    selector: "my-cmp",
+	selector: "my-cmp",
 })
 export class MyCmp {
-    @Input() foo = "initial";
+	@Input() foo = "initial";
 
-    constructor() {
-        console.log(this.foo); // logs "initial"
-    }
+	constructor() {
+		console.log(this.foo); // logs "initial"
+	}
 
-    ngOnInit() {
-        console.log(this.foo); // logs "from app component"
-    }
+	ngOnInit() {
+		console.log(this.foo); // logs "from app component"
+	}
 }
 
 @Component({
-    template: `
-        <my-cmp [foo]="'from app component'" />
-    `,
+	template: `
+		<my-cmp [foo]="'from app component'" />
+	`,
 })
 export class AppCmp {}
 ```
@@ -274,8 +274,8 @@ Let's bring back our `angular-three` template that creates a `Mesh`
 
 ```html
 <ngt-mesh>
-    <ngt-box-geometry />
-    <ngt-mesh-basic-material />
+	<ngt-box-geometry />
+	<ngt-mesh-basic-material />
 </ngt-mesh>
 ```
 
@@ -284,8 +284,8 @@ we can **safely** rely on Property Bindings to set parameters for `MeshBasicMate
 
 ```html
 <ngt-mesh>
-    <ngt-box-geometry />
-    <ngt-mesh-basic-material [color]="materialColor" />
+	<ngt-box-geometry />
+	<ngt-mesh-basic-material [color]="materialColor" />
 </ngt-mesh>
 ```
 
@@ -364,14 +364,14 @@ In order to understand the next part, let's look at a simplified version of `Ren
 ```ts
 // Our custom renderer
 export class CustomRenderer implements Renderer2 {
-    createElement(name: string, namespace?: string | null | undefined) {
-        // name will be `ngt-box-geometry` when Angular tries rendering `ngt-box-geometry`
-        const threeTarget = getThreeTargetFromName(name); // this will return the actual BoxGeometry class from THREE.js
-        if (threeTarget) {
-            //                          👇 we need to pass the args, [1, 1, 1], here
-            const node = new threeTarget(); // this is where we instantiate the BoxGeometry.
-        }
-    }
+	createElement(name: string, namespace?: string | null | undefined) {
+		// name will be `ngt-box-geometry` when Angular tries rendering `ngt-box-geometry`
+		const threeTarget = getThreeTargetFromName(name); // this will return the actual BoxGeometry class from THREE.js
+		if (threeTarget) {
+			//                          👇 we need to pass the args, [1, 1, 1], here
+			const node = new threeTarget(); // this is where we instantiate the BoxGeometry.
+		}
+	}
 }
 ```
 
@@ -389,7 +389,7 @@ For folks that are not aware, `*args` is the [short-hand syntax](https://angular
 
 ```html
 <ng-template [args]="[1, 1, 1]">
-    <ngt-box-geometry />
+	<ngt-box-geometry />
 </ng-template>
 ```
 
@@ -399,25 +399,25 @@ Next, let's check the compiled code
 
 ```js
 function AppComponent_ngt_box_geometry_0_Template(rf, ctx) {
-    if (rf & 1) {
-        i0.ɵɵelement(0, "ngt-box-geometry");
-    }
+	if (rf & 1) {
+		i0.ɵɵelement(0, "ngt-box-geometry");
+	}
 }
 
 function AppComponent_Template(rf, ctx) {
-    if (rf & 1) {
-        i0.ɵɵtemplate(
-            0,
-            AppComponent_ngt_box_geometry_0_Template,
-            1,
-            0,
-            "ngt-box-geometry",
-            0,
-        );
-    }
-    if (rf & 2) {
-        i0.ɵɵproperty("args", [1, 1, 1]);
-    }
+	if (rf & 1) {
+		i0.ɵɵtemplate(
+			0,
+			AppComponent_ngt_box_geometry_0_Template,
+			1,
+			0,
+			"ngt-box-geometry",
+			0,
+		);
+	}
+	if (rf & 2) {
+		i0.ɵɵproperty("args", [1, 1, 1]);
+	}
 }
 ```
 
@@ -425,9 +425,9 @@ Woohoo, new instruction! The `template` instruction is responsible for handling 
 if we can get a hold of that `Comment` node, we _technically_ can access the `NgtArgs` directive instance that is attached on that `Comment` node.
 
 <BlogImage
-    sizes="960px"
-    src={commentScreenshot}
-    alt="A screenshot of the Comment node and its Injector (NgtArgs instance is visible at the bottom)"
+	sizes="960px"
+	src={commentScreenshot}
+	alt="A screenshot of the Comment node and its Injector (NgtArgs instance is visible at the bottom)"
 />
 
 Another important point is Angular creates the `Comment` node first, then the `NgtArgs` directive will be instantiated with the `property` instruction, in the `Update` phase. Now, how do we track the created `Comment`? Our Custom Renderer will do that.
@@ -459,33 +459,33 @@ Tracking the `Comment` alone will not be enough, we need the `Injector` which al
 
 ```ts
 @Directive({
-    selector: "[args]",
-    standalone: true,
+	selector: "[args]",
+	standalone: true,
 })
 export class NgtArgs {
-    @Input() set args(args: any[]) {
-        // let's assume args is always valid for now
-        if (this.embeddedViewRef) {
-            // if args changes, we will need to reconstruct the THREE.js entities
-            this.embeddedViewRef.destroy();
-        }
-        this.embeddedViewRef = this.vcr.createEmbeddedView(this.templateRef);
-    }
-    private vcr = inject(ViewContainerRef);
-    private templateRef = inject(TemplateRef);
-    private embeddedViewRef?: EmbeddedViewRef;
+	@Input() set args(args: any[]) {
+		// let's assume args is always valid for now
+		if (this.embeddedViewRef) {
+			// if args changes, we will need to reconstruct the THREE.js entities
+			this.embeddedViewRef.destroy();
+		}
+		this.embeddedViewRef = this.vcr.createEmbeddedView(this.templateRef);
+	}
+	private vcr = inject(ViewContainerRef);
+	private templateRef = inject(TemplateRef);
+	private embeddedViewRef?: EmbeddedViewRef;
 
-    constructor() {
-        // let's log the ViewContainerRef to see what we have on here (you can log other stuffs too)
-        console.log(this.vcr);
-    }
+	constructor() {
+		// let's log the ViewContainerRef to see what we have on here (you can log other stuffs too)
+		console.log(this.vcr);
+	}
 }
 ```
 
 <BlogImage
-    sizes="960px"
-    src={vcrScreenshot}
-    alt="A screenshot of the ViewContainerRef on the directive"
+	sizes="960px"
+	src={vcrScreenshot}
+	alt="A screenshot of the ViewContainerRef on the directive"
 />
 
 And voila, we found our `Injector`. The `ViewContainerRef` also contains the `element` which is the `Comment` node that the Renderer created. Great!
@@ -494,14 +494,14 @@ And voila, we found our `Injector`. The `ViewContainerRef` also contains the `el
 
 So what do we know so far?
 
--   The `Comment` will be created before the `NgtArgs` directive is instantiated, which means that `NgtArgs` constructor runs **after** the `Comment` is created
--   `ViewContainerRef` contains the `Injector` along with the `Comment`.
+- The `Comment` will be created before the `NgtArgs` directive is instantiated, which means that `NgtArgs` constructor runs **after** the `Comment` is created
+- `ViewContainerRef` contains the `Injector` along with the `Comment`.
 
 Then what can we do?
 
--   We can attach some arbitrary function on the `Comment` node.
--   We then get the instance of the `Comment` node using the `ViewContainerRef` and invoke this function in our directive. At this point, we can pass anything we want
-    to our Renderer.
+- We can attach some arbitrary function on the `Comment` node.
+- We then get the instance of the `Comment` node using the `ViewContainerRef` and invoke this function in our directive. At this point, we can pass anything we want
+  to our Renderer.
 
 > There are different approaches to do this but this is what Angular Three is doing at the moment.
 
@@ -575,24 +575,24 @@ Alright, now we have the `Injector[]` that we're tracking, we can adjust `Render
 
 ```ts
 export class CustomRenderer implements Renderer2 {
-    createElement(name: string, namespace?: string | null | undefined) {
-        // name will be `ngt-box-geometry` when Angular tries rendering `ngt-box-geometry`
-        const threeTarget = getThreeTargetFromName(name); // this will return the actual BoxGeometry class from THREE.js
-        if (threeTarget) {
-            let args: any[] = [];
-            // we'll loop over the `Injector` array and attempt to inject NgtArgs
-            for (const commentInjector of this.comments) {
-                const ngtArgs = commentInjector.get(NgtArgs, null);
-                if (!ngtArgs) continue;
-                const injectedArgs = ngtArgs.injectedArgs;
-                if (!injectedArgs) continue;
-                args = injectedArgs;
-                // break as soon as we find injectedArgs
-                break;
-            }
-            const node = new threeTarget(...args); // this is where we instantiate the BoxGeometry.
-        }
-    }
+	createElement(name: string, namespace?: string | null | undefined) {
+		// name will be `ngt-box-geometry` when Angular tries rendering `ngt-box-geometry`
+		const threeTarget = getThreeTargetFromName(name); // this will return the actual BoxGeometry class from THREE.js
+		if (threeTarget) {
+			let args: any[] = [];
+			// we'll loop over the `Injector` array and attempt to inject NgtArgs
+			for (const commentInjector of this.comments) {
+				const ngtArgs = commentInjector.get(NgtArgs, null);
+				if (!ngtArgs) continue;
+				const injectedArgs = ngtArgs.injectedArgs;
+				if (!injectedArgs) continue;
+				args = injectedArgs;
+				// break as soon as we find injectedArgs
+				break;
+			}
+			const node = new threeTarget(...args); // this is where we instantiate the BoxGeometry.
+		}
+	}
 }
 ```
 
@@ -614,8 +614,8 @@ you were able to learn something new and have fun learning it. See y'all in the 
 
 I humbly thank all these beautiful wonderful people for reviewing this blog post
 
--   [Enea Jahollari](https://twitter.com/Enea_Jahollari)
--   [Jason Warner](https://twitter.com/xocomil_1)
--   [Matthiew Riegler](https://twitter.com/Jean__Meche)
--   [Luis Castro Cabrera](https://twitter.com/LuisHCCDev)
--   [Josh Morony](https://twitter.com/joshuamorony)
+- [Enea Jahollari](https://twitter.com/Enea_Jahollari)
+- [Jason Warner](https://twitter.com/xocomil_1)
+- [Matthiew Riegler](https://twitter.com/Jean__Meche)
+- [Luis Castro Cabrera](https://twitter.com/LuisHCCDev)
+- [Josh Morony](https://twitter.com/joshuamorony)

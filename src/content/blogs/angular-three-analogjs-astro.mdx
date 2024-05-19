@@ -68,38 +68,38 @@ Then fill it out with the following content
 
 ```json
 {
-    "extends": "./tsconfig.json",
-    "compileOnSave": false,
-    "compilerOptions": {
-        "baseUrl": "./",
-        "outDir": "./dist/out-tsc",
-        "forceConsistentCasingInFileNames": true,
-        "strict": true,
-        "noImplicitOverride": true,
-        "noPropertyAccessFromIndexSignature": true,
-        "noImplicitReturns": true,
-        "noFallthroughCasesInSwitch": true,
-        "sourceMap": true,
-        "declaration": false,
-        "downlevelIteration": true,
-        "experimentalDecorators": true,
-        "moduleResolution": "node",
-        "importHelpers": true,
-        "noEmit": false,
-        "target": "es2022",
-        "module": "es2022",
-        "lib": ["es2022", "dom"],
-        "skipLibCheck": true
-    },
-    "angularCompilerOptions": {
-        "enableI18nLegacyMessageIdFormat": false,
-        "strictInjectionParameters": true,
-        "strictInputAccessModifiers": true,
-        "strictTemplates": true,
-        "allowJs": false
-    },
-    "files": [],
-    "include": ["src/**/*.ts", "src/**/*.tsx"]
+	"extends": "./tsconfig.json",
+	"compileOnSave": false,
+	"compilerOptions": {
+		"baseUrl": "./",
+		"outDir": "./dist/out-tsc",
+		"forceConsistentCasingInFileNames": true,
+		"strict": true,
+		"noImplicitOverride": true,
+		"noPropertyAccessFromIndexSignature": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"sourceMap": true,
+		"declaration": false,
+		"downlevelIteration": true,
+		"experimentalDecorators": true,
+		"moduleResolution": "node",
+		"importHelpers": true,
+		"noEmit": false,
+		"target": "es2022",
+		"module": "es2022",
+		"lib": ["es2022", "dom"],
+		"skipLibCheck": true
+	},
+	"angularCompilerOptions": {
+		"enableI18nLegacyMessageIdFormat": false,
+		"strictInjectionParameters": true,
+		"strictInputAccessModifiers": true,
+		"strictTemplates": true,
+		"allowJs": false
+	},
+	"files": [],
+	"include": ["src/**/*.ts", "src/**/*.tsx"]
 }
 ```
 
@@ -119,10 +119,10 @@ Then fill it out with the following boilerplate
 import { Component } from "@angular/core";
 
 @Component({
-    standalone: true,
-    template: `
-        Hello Angular
-    `,
+	standalone: true,
+	template: `
+		Hello Angular
+	`,
 })
 export class Experience {}
 ```
@@ -165,8 +165,8 @@ npm run dev
 Then go to `http://localhost:4321` and we'll see our `Experience` component is rendered 🎊
 
 <BlogImage
-    src={astroHome}
-    alt="Astro home page with Angular component rendered"
+	src={astroHome}
+	alt="Astro home page with Angular component rendered"
 />
 
 > At this point, we can technically start writing blog posts with Astro and Angular
@@ -189,21 +189,21 @@ import { CUSTOM_ELEMENTS_SCHEMA, Component } from "@angular/core";
 import { NgtCanvas } from "angular-three";
 
 @Component({
-    standalone: true,
-    template: ``,
-    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+	standalone: true,
+	template: ``,
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 class Scene {}
 
 @Component({
-    standalone: true,
-    template: `
-        <ngt-canvas [sceneGraph]="scene" />
-    `,
-    imports: [NgtCanvas],
+	standalone: true,
+	template: `
+		<ngt-canvas [sceneGraph]="scene" />
+	`,
+	imports: [NgtCanvas],
 })
 export class Experience {
-    scene = Scene;
+	scene = Scene;
 }
 ```
 
@@ -278,8 +278,8 @@ Now, our Astro application renders a pink "box"
 
 Our canvas is a little too small. This is because of two reasons:
 
--   Canvas default height is `150px` per [spec](https://www.w3.org/TR/2012/WD-html5-author-20120329/the-canvas-element.html#the-canvas-element)
--   Our `Experience`'s parent element doesn't have a `height` set
+- Canvas default height is `150px` per [spec](https://www.w3.org/TR/2012/WD-html5-author-20120329/the-canvas-element.html#the-canvas-element)
+- Our `Experience`'s parent element doesn't have a `height` set
 
 `NgtCanvas` component is designed to take on the parent's dimensions. Hence, we can control our canvas' sizes by wrapping `<Experience />` with
 a container with a specified `height`
@@ -293,8 +293,8 @@ a container with a specified `height`
 The canvas will take up `600px` and our pink box will be more visible.
 
 <BlogImage
-    src={astroBoxBig}
-    alt="Astro home page a pink box on a large canvas"
+	src={astroBoxBig}
+	alt="Astro home page a pink box on a large canvas"
 />
 
 ### Animate the box
@@ -328,8 +328,8 @@ class Scene {
 This function runs outside of Angular Zone (i.e: outside of Angular Change Detection mechanism) to maintain high FPS. It is good practice
 to **NOT** update states in this function.
 
--   The `state` object contains useful information about Angular Three internals like `delta`, `clock`, the default `THREE.Scene`, the default `THREE.Camera`, and more.
--   The `object` is the instance of the 3D object that Angular Three renders. In this case, it is the `THREE.Mesh` instance from `ngt-mesh`
+- The `state` object contains useful information about Angular Three internals like `delta`, `clock`, the default `THREE.Scene`, the default `THREE.Camera`, and more.
+- The `object` is the instance of the 3D object that Angular Three renders. In this case, it is the `THREE.Mesh` instance from `ngt-mesh`
 
 <BlogImage src={astroBoxAnimate} alt="A rotating pink box" format="gif" />
 
@@ -409,9 +409,9 @@ class Scene {
 Voila! Now our box looks so much better, with dimensionality, like a real box.
 
 <BlogImage
-    src={astroBoxAnimateLights}
-    alt="A 'real' rotating pink box"
-    format="gif"
+	src={astroBoxAnimateLights}
+	alt="A 'real' rotating pink box"
+	format="gif"
 />
 
 ### Take control of the camera
@@ -475,20 +475,20 @@ class Scene {
 }
 ```
 
--   We import `injectNgtStore` and `NgtArgs` from `angular-three`
--   We add `NgtArgs` to `imports` array to make `*args` directive available to our template
--   We call `injectNgtStore` to grab the internal Angular Three store object via DI
-    -   `camera` is the default camera. `this.store.select()` returns a [Signal](https://angular.io/guide/signals)
-    -   `domElement` is the DOM element from the `WebGLRenderer`. `this.store.select()` accepts multiple arguments to select nested objects.
--   We render `ngt-orbit-controls` and pass `camera()` along with `domElement()` to `*args`
-    -   This is equivalent to `new OrbitControls(camera, domElement)`
+- We import `injectNgtStore` and `NgtArgs` from `angular-three`
+- We add `NgtArgs` to `imports` array to make `*args` directive available to our template
+- We call `injectNgtStore` to grab the internal Angular Three store object via DI
+  - `camera` is the default camera. `this.store.select()` returns a [Signal](https://angular.io/guide/signals)
+  - `domElement` is the DOM element from the `WebGLRenderer`. `this.store.select()` accepts multiple arguments to select nested objects.
+- We render `ngt-orbit-controls` and pass `camera()` along with `domElement()` to `*args`
+  - This is equivalent to `new OrbitControls(camera, domElement)`
 
 Back to our running application and BOOM 💥, we can grab the scene, rotate it around, and zoom in/out
 
 <BlogImage
-    src={astroBoxOrbitControls}
-    alt="Controlling the camera with OrbitControls"
-    format="gif"
+	src={astroBoxOrbitControls}
+	alt="Controlling the camera with OrbitControls"
+	format="gif"
 />
 
 ## Conclusion

@@ -33,8 +33,8 @@ Our example is going to be a 3D Model component that can load and display variou
 
 The gist of the example is:
 
--   There is a GLTF service that loads the external models
--   The service reacts to the model name via `Input`
+- There is a GLTF service that loads the external models
+- The service reacts to the model name via `Input`
 
 ## RxJS Approach
 
@@ -43,18 +43,18 @@ In an RxJS world, we can write our Component as follow:
 ```ts
 @Component({})
 export class CarModel {
-    #modelName$ = new BehaviorSubject<AvailableModel>("lightning");
-    @Input() set modelName(value: AvailableModel) {
-        this.#modelName$.next(value);
-    }
+	#modelName$ = new BehaviorSubject<AvailableModel>("lightning");
+	@Input() set modelName(value: AvailableModel) {
+		this.#modelName$.next(value);
+	}
 
-    #service = inject(GLTFService);
+	#service = inject(GLTFService);
 
-    model$ = this.#modelName$.pipe(
-        switchMap((modelName) => this.#service.load(`assets/${modelName}.glb`)),
-    ); // Observable<GLTF>
+	model$ = this.#modelName$.pipe(
+		switchMap((modelName) => this.#service.load(`assets/${modelName}.glb`)),
+	); // Observable<GLTF>
 
-    // then next step is: model$ | async or toSignal(this.model$)
+	// then next step is: model$ | async or toSignal(this.model$)
 }
 ```
 
@@ -64,14 +64,14 @@ And people are probably going to utilize those. For example, Signal Input:
 
 ```ts
 export class CarModel {
-    // compare
-    #modelName$ = new BehaviorSubject<AvailableModel>("lightning");
-    @Input() set modelName(value: AvailableModel) {
-        this.#modelName$.next(value);
-    }
+	// compare
+	#modelName$ = new BehaviorSubject<AvailableModel>("lightning");
+	@Input() set modelName(value: AvailableModel) {
+		this.#modelName$.next(value);
+	}
 
-    // with
-    modelName = input<AvailableModel>("lightning");
+	// with
+	modelName = input<AvailableModel>("lightning");
 }
 ```
 
@@ -99,14 +99,14 @@ Now, we can map that to our `CarModel` component
 
 ```ts
 export class CarModel {
-    #modelName = signal<AvailableModel>("lightning");
-    @Input() set modelName(value: AvailableModel) {
-        this.#modelName.set(value);
-    }
+	#modelName = signal<AvailableModel>("lightning");
+	@Input() set modelName(value: AvailableModel) {
+		this.#modelName.set(value);
+	}
 
-    // oh man, how bad I want: modelName = input<AvailableModel>('lightning');
-    gltf = injectGLTF(this.#modelName);
-    // 👆 Signal<GLTF | null>
+	// oh man, how bad I want: modelName = input<AvailableModel>('lightning');
+	gltf = injectGLTF(this.#modelName);
+	// 👆 Signal<GLTF | null>
 }
 ```
 
@@ -118,24 +118,24 @@ Next, we'll move on to the implementation of `injectGLTF`
 
 ```ts
 export function injectGLTF(path: Signal<string>): Signal<GLTF | null> {
-    //              👇 create a Signal and starts out as `null`
-    const gltf = signal<GLTF | null>(null);
+	//              👇 create a Signal and starts out as `null`
+	const gltf = signal<GLTF | null>(null);
 
-    // 👇 starts an effect to fetch the model
-    effect(() => {
-        //              👇 read the `path` Signal -> registers `path` as a dependency to this Effect
-        const _path = path();
-        //              👇 instantiate the GLTFLoader instance (*)
-        const loader = new GLTFLoader();
-        //      👇 have the Loader instance fetching for the model
-        loader.load(_path, (data) => {
-            //    👇 set the data. This is fine because this happens on a different call stack (async)
-            gltf.set(data);
-        });
-    });
+	// 👇 starts an effect to fetch the model
+	effect(() => {
+		//              👇 read the `path` Signal -> registers `path` as a dependency to this Effect
+		const _path = path();
+		//              👇 instantiate the GLTFLoader instance (*)
+		const loader = new GLTFLoader();
+		//      👇 have the Loader instance fetching for the model
+		loader.load(_path, (data) => {
+			//    👇 set the data. This is fine because this happens on a different call stack (async)
+			gltf.set(data);
+		});
+	});
 
-    //          👇 returns the readonly Signal
-    return gltf.asReadonly();
+	//          👇 returns the readonly Signal
+	return gltf.asReadonly();
 }
 ```
 
@@ -147,20 +147,20 @@ That's it! Now let's see how we can use it
 ```ts
 @Component({})
 export class CarModel {
-    #modelName = signal<AvailableModel>("lightning");
-    @Input() set modelName(value: AvailableModel) {
-        this.#modelName.set(value);
-    }
+	#modelName = signal<AvailableModel>("lightning");
+	@Input() set modelName(value: AvailableModel) {
+		this.#modelName.set(value);
+	}
 
-    // 1. we can pass in a function directly to calculate the `/assets` path
-    gltf = injectGLTF(() => `assets/${this.#modelName()}.glb`);
-    // 2. or we can create a computed
-    #assetPath = computed(() => `assets/${this.$modelName()}.glb`);
-    gltf = injectGLTF(this.#assetPath);
-    // 3. or we can also pass in a function for a **static** value
-    gltf = injectGLTF(() => `assets/chau-awesome-car.glb`);
+	// 1. we can pass in a function directly to calculate the `/assets` path
+	gltf = injectGLTF(() => `assets/${this.#modelName()}.glb`);
+	// 2. or we can create a computed
+	#assetPath = computed(() => `assets/${this.$modelName()}.glb`);
+	gltf = injectGLTF(this.#assetPath);
+	// 3. or we can also pass in a function for a **static** value
+	gltf = injectGLTF(() => `assets/chau-awesome-car.glb`);
 
-    // then next step is: gltf() on the template
+	// then next step is: gltf() on the template
 }
 ```
 

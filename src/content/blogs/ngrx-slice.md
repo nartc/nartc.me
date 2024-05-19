@@ -10,8 +10,8 @@ In this blog post, I want to introduce my latest open source project `[ngrx-slic
 
 ## TLDR
 
--   `ngrx-slice` provides the same functionalities as Redux Toolkit `createSlice` provides
--   The goal is to reduce NgRx boilerplate, at least for simple feature states.
+- `ngrx-slice` provides the same functionalities as Redux Toolkit `createSlice` provides
+- The goal is to reduce NgRx boilerplate, at least for simple feature states.
 
 Run the following command to install:
 
@@ -19,8 +19,8 @@ Run the following command to install:
 npm install ngrx-slice ngrx-immer immer
 ```
 
--   Consult [documentations](https://ngrx-slice.netlify.app/) for usage details.
--   Github repo available at [ngrx-slice](https://github.com/nartc/ngrx-slice)
+- Consult [documentations](https://ngrx-slice.netlify.app/) for usage details.
+- Github repo available at [ngrx-slice](https://github.com/nartc/ngrx-slice)
 
 ## What is `ngrx-slice`?
 
@@ -37,18 +37,18 @@ const decrement = { type: "decrement" };
 
 // reducers
 const initialState = {
-    value: 0,
+	value: 0,
 };
 
 const reducer = (state, action) => {
-    switch (action.type) {
-        case "increment":
-            return { ...state, value: state.value + 1 };
-        case "decrement":
-            return { ...state, value: state.value - 1 };
-        default:
-            return state;
-    }
+	switch (action.type) {
+		case "increment":
+			return { ...state, value: state.value + 1 };
+		case "decrement":
+			return { ...state, value: state.value - 1 };
+		default:
+			return state;
+	}
 };
 
 // selectors
@@ -61,22 +61,22 @@ Now let’s look at the same example with `createSlice` API:
 
 ```jsx
 const counterSlice = createSlice({
-    name: "counter",
-    initialState: {
-        value: 0,
-    },
-    reducers: {
-        increment: (state) => {
-            // Redux Toolkit allows us to write "mutating" logic in reducers. It
-            // doesn't actually mutate the state because it uses the Immer library,
-            // which detects changes to a "draft state" and produces a brand new
-            // immutable state based off those changes
-            state.value++;
-        },
-        decrement: (state) => {
-            state.value--;
-        },
-    },
+	name: "counter",
+	initialState: {
+		value: 0,
+	},
+	reducers: {
+		increment: (state) => {
+			// Redux Toolkit allows us to write "mutating" logic in reducers. It
+			// doesn't actually mutate the state because it uses the Immer library,
+			// which detects changes to a "draft state" and produces a brand new
+			// immutable state based off those changes
+			state.value++;
+		},
+		decrement: (state) => {
+			state.value--;
+		},
+	},
 });
 
 export default counterSlice.reducer;
@@ -102,57 +102,57 @@ export const increment = creaeteAction("[Counter] Increment");
 export const decrement = createAction("[Counter] Decrement");
 // putting in some effect just to make a point
 export const multiplyBy = createAction(
-    "[Counter] Multiply By",
-    prop<{ multiplier: number }>(),
+	"[Counter] Multiply By",
+	prop<{ multiplier: number }>(),
 );
 export const multiplyBySuccess = createAction(
-    "[Counter] Multiply By Success",
-    prop<{ value: number }>(),
+	"[Counter] Multiply By Success",
+	prop<{ value: number }>(),
 );
 ```
 
 ```tsx
 export interface CounterState {
-    value: number;
-    incrementCount: number;
-    decrementCount: number;
+	value: number;
+	incrementCount: number;
+	decrementCount: number;
 }
 
 export const initialState: CounterState = {
-    value: 0,
-    incrementCount: 0,
-    decrementCount: 0,
+	value: 0,
+	incrementCount: 0,
+	decrementCount: 0,
 };
 
 export const counterReducer = createReducer(
-    initialState,
-    on(increment, (state) => ({
-        ...state,
-        value: state.value + 1,
-        incrementCount: state.incrementCount + 1,
-    })),
-    on(decrement, (state) => ({
-        ...state,
-        value: state.value - 1,
-        decrementCount: state.decrementCount + 1,
-    })),
-    on(multiplyBySuccess, (state, { value }) => ({ ...state, value })),
+	initialState,
+	on(increment, (state) => ({
+		...state,
+		value: state.value + 1,
+		incrementCount: state.incrementCount + 1,
+	})),
+	on(decrement, (state) => ({
+		...state,
+		value: state.value - 1,
+		decrementCount: state.decrementCount + 1,
+	})),
+	on(multiplyBySuccess, (state, { value }) => ({ ...state, value })),
 );
 ```
 
 ```tsx
 export const selectCounter = createFeatureSelector<CounterState>("counter");
 export const selectValue = createSelector(
-    selectCounter,
-    (state) => state.value,
+	selectCounter,
+	(state) => state.value,
 );
 export const selectIncrementCount = createSelector(
-    selectorCounter,
-    (state) => state.incrementCount,
+	selectorCounter,
+	(state) => state.incrementCount,
 );
 export const selectDecrementCount = createSelector(
-    selectorCounter,
-    (state) => state.decrementCount,
+	selectorCounter,
+	(state) => state.decrementCount,
 );
 ```
 
@@ -161,26 +161,24 @@ The following effect is included for completeness. `ngrx-slice` does not affect 
 ```tsx
 @Injectable()
 export class CounterEffects {
-    constructor(
-        private store: Store,
-        private actions$: Actions,
-    ) {}
+	constructor(
+		private store: Store,
+		private actions$: Actions,
+	) {}
 
-    readonly multiplyBy = createEffect(() =>
-        this.actions$.pipe(
-            ofType(multiplyBy),
-            concatLatestFrom(() => this.store.select(selectValue)),
-            // switchMap to a mock side-effect (timer)
-            switchMap(([{ multiplier }, currentValue]) =>
-                // delay 1s to simulate async task
-                timer(1000).pipe(
-                    map(() =>
-                        multiplyBySuccess({ value: currentValue * multiplier }),
-                    ),
-                ),
-            ),
-        ),
-    );
+	readonly multiplyBy = createEffect(() =>
+		this.actions$.pipe(
+			ofType(multiplyBy),
+			concatLatestFrom(() => this.store.select(selectValue)),
+			// switchMap to a mock side-effect (timer)
+			switchMap(([{ multiplier }, currentValue]) =>
+				// delay 1s to simulate async task
+				timer(1000).pipe(
+					map(() => multiplyBySuccess({ value: currentValue * multiplier })),
+				),
+			),
+		),
+	);
 }
 ```
 
@@ -204,40 +202,40 @@ Instead of the 3 different files for Actions, Reducers, and Selectors, you’d h
 
 ```tsx
 export interface CounterState {
-    value: number;
-    incrementCount: number;
-    decrementCount: number;
+	value: number;
+	incrementCount: number;
+	decrementCount: number;
 }
 
 export const initialState: CounterState = {
-    value: 0,
-    incrementCount: 0,
-    decrementCount: 0,
+	value: 0,
+	incrementCount: 0,
+	decrementCount: 0,
 };
 
 export const {
-    selectors: CounterSelectors,
-    actions: CounterActions,
-    ...CounterFeature
+	selectors: CounterSelectors,
+	actions: CounterActions,
+	...CounterFeature
 } = createSlice({
-    name: "counter",
-    initialState,
-    reducers: {
-        increment: (state) => {
-            state.value++;
-            state.incrementCount++;
-        },
-        decrement: (state) => {
-            state.value--;
-            state.decrementCount++;
-        },
-        multiplyBy: {
-            trigger: noopReducer<CounterState, { multiplier: number }>(),
-            success: (state, { value }: PayloadAction<{ value: number }>) => {
-                state.value = value;
-            },
-        },
-    },
+	name: "counter",
+	initialState,
+	reducers: {
+		increment: (state) => {
+			state.value++;
+			state.incrementCount++;
+		},
+		decrement: (state) => {
+			state.value--;
+			state.decrementCount++;
+		},
+		multiplyBy: {
+			trigger: noopReducer<CounterState, { multiplier: number }>(),
+			success: (state, { value }: PayloadAction<{ value: number }>) => {
+				state.value = value;
+			},
+		},
+	},
 });
 ```
 
@@ -267,32 +265,30 @@ The return value of `createSlice` is an object with the shape `{ actions, select
 ```tsx
 @Injectable()
 export class CounterEffects {
-    constructor(
-        private store: Store,
-        private actions$: Actions,
-    ) {}
+	constructor(
+		private store: Store,
+		private actions$: Actions,
+	) {}
 
-    readonly multiplyBy = createEffect(() =>
-        this.actions$.pipe(
-            // using multiplyBy.trigger
-            ofType(CounterActions.multiplyBy.trigger),
-            concatLatestFrom(() =>
-                this.store.select(CounterSelectors.selectValue),
-            ),
-            // switchMap to a mock side-effect (timer)
-            switchMap(([{ multiplier }, currentValue]) =>
-                // delay 1s to simulate async task
-                timer(1000).pipe(
-                    // return multiplyBy.success action
-                    map(() =>
-                        CounterActions.multiplyBy.success({
-                            value: currentValue * multiplier,
-                        }),
-                    ),
-                ),
-            ),
-        ),
-    );
+	readonly multiplyBy = createEffect(() =>
+		this.actions$.pipe(
+			// using multiplyBy.trigger
+			ofType(CounterActions.multiplyBy.trigger),
+			concatLatestFrom(() => this.store.select(CounterSelectors.selectValue)),
+			// switchMap to a mock side-effect (timer)
+			switchMap(([{ multiplier }, currentValue]) =>
+				// delay 1s to simulate async task
+				timer(1000).pipe(
+					// return multiplyBy.success action
+					map(() =>
+						CounterActions.multiplyBy.success({
+							value: currentValue * multiplier,
+						}),
+					),
+				),
+			),
+		),
+	);
 }
 ```
 
@@ -318,6 +314,6 @@ That is all. Go ahead and give `ngrx-slice` a try. Feel free to reach out to me 
 
 ## Special Mentions
 
--   Marko Stanimirović ([@MarkoStDev](https://twitter.com/MarkoStDev)) for `ngrx-child-selectors` and his `createFeature` PR
--   Tim Deschryver ([@tim_deschryver](https://twitter.com/tim_deschryver)) for `ngrx-immer`
--   Mark Erikson ([@acemarke](https://twitter.com/acemarke)) for Redux Toolkit
+- Marko Stanimirović ([@MarkoStDev](https://twitter.com/MarkoStDev)) for `ngrx-child-selectors` and his `createFeature` PR
+- Tim Deschryver ([@tim_deschryver](https://twitter.com/tim_deschryver)) for `ngrx-immer`
+- Mark Erikson ([@acemarke](https://twitter.com/acemarke)) for Redux Toolkit

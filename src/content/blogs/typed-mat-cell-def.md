@@ -21,35 +21,35 @@ To be able to provide top-of-the-line customizations to its consumers, `MatTable
 
 ```html
 <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
-    <!--- Note that these columns can be defined in any order.
+	<!--- Note that these columns can be defined in any order.
         The rendered columns are set as a property on the row definition" -->
 
-    <!-- Position Column -->
-    <ng-container matColumnDef="position">
-        <th mat-header-cell *matHeaderCellDef>No.</th>
-        <td mat-cell *matCellDef="let element">{{element.position}}</td>
-    </ng-container>
+	<!-- Position Column -->
+	<ng-container matColumnDef="position">
+		<th mat-header-cell *matHeaderCellDef>No.</th>
+		<td mat-cell *matCellDef="let element">{{element.position}}</td>
+	</ng-container>
 
-    <!-- Name Column -->
-    <ng-container matColumnDef="name">
-        <th mat-header-cell *matHeaderCellDef>Name</th>
-        <td mat-cell *matCellDef="let element">{{element.name}}</td>
-    </ng-container>
+	<!-- Name Column -->
+	<ng-container matColumnDef="name">
+		<th mat-header-cell *matHeaderCellDef>Name</th>
+		<td mat-cell *matCellDef="let element">{{element.name}}</td>
+	</ng-container>
 
-    <!-- Weight Column -->
-    <ng-container matColumnDef="weight">
-        <th mat-header-cell *matHeaderCellDef>Weight</th>
-        <td mat-cell *matCellDef="let element">{{element.weight}}</td>
-    </ng-container>
+	<!-- Weight Column -->
+	<ng-container matColumnDef="weight">
+		<th mat-header-cell *matHeaderCellDef>Weight</th>
+		<td mat-cell *matCellDef="let element">{{element.weight}}</td>
+	</ng-container>
 
-    <!-- Symbol Column -->
-    <ng-container matColumnDef="symbol">
-        <th mat-header-cell *matHeaderCellDef>Symbol</th>
-        <td mat-cell *matCellDef="let element">{{element.symbol}}</td>
-    </ng-container>
+	<!-- Symbol Column -->
+	<ng-container matColumnDef="symbol">
+		<th mat-header-cell *matHeaderCellDef>Symbol</th>
+		<td mat-cell *matCellDef="let element">{{element.symbol}}</td>
+	</ng-container>
 
-    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+	<tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+	<tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
 </table>
 ```
 
@@ -57,9 +57,9 @@ To be able to provide top-of-the-line customizations to its consumers, `MatTable
 
 These `<td mat-cell *matCellDef="let element"></td>` are horrible. It brings the Developer Experience down greatly because `element` has no type information whatsoever. Additionally, this is also one of the features that have been asked multiple times on the **Angular** repository
 
--   [https://github.com/angular/components/issues/22290](https://github.com/angular/components/issues/22290)
--   [https://github.com/angular/components/issues/16273](https://github.com/angular/components/issues/16273)
--   [https://github.com/angular/angular/issues/28731](https://github.com/angular/angular/issues/28731)
+- [https://github.com/angular/components/issues/22290](https://github.com/angular/components/issues/22290)
+- [https://github.com/angular/components/issues/16273](https://github.com/angular/components/issues/16273)
+- [https://github.com/angular/angular/issues/28731](https://github.com/angular/angular/issues/28731)
 
 While the **Angular** team does _want_ to provide this enhancement, the technical limitation seems to stem from how the **Angular Compiler** works, so it is a little low-level and will pose a great challenge for either the team, or the community to contribute.
 
@@ -80,23 +80,20 @@ import { MatCellDef, MatTableDataSource } from "@angular/material/table";
 import { Observable } from "rxjs";
 
 @Directive({
-    selector: "[matCellDef]", // same selector as MatCellDef
-    providers: [{ provide: CdkCellDef, useExisting: TypeSafeMatCellDef }],
+	selector: "[matCellDef]", // same selector as MatCellDef
+	providers: [{ provide: CdkCellDef, useExisting: TypeSafeMatCellDef }],
 })
 export class TypeSafeMatCellDef<T> extends MatCellDef {
-    // leveraging syntactic-sugar syntax when we use *matCellDef
-    @Input() matCellDefDataSource:
-        | T[]
-        | Observable<T[]>
-        | MatTableDataSource<T>;
+	// leveraging syntactic-sugar syntax when we use *matCellDef
+	@Input() matCellDefDataSource: T[] | Observable<T[]> | MatTableDataSource<T>;
 
-    // ngTemplateContextGuard flag to help with the Language Service
-    static ngTemplateContextGuard<T>(
-        dir: TypeSafeMatCellDef<T>,
-        ctx: unknown,
-    ): ctx is { $implicit: T; index: number } {
-        return true;
-    }
+	// ngTemplateContextGuard flag to help with the Language Service
+	static ngTemplateContextGuard<T>(
+		dir: TypeSafeMatCellDef<T>,
+		ctx: unknown,
+	): ctx is { $implicit: T; index: number } {
+		return true;
+	}
 }
 ```
 
@@ -104,20 +101,20 @@ Let’s walk over each piece in this **Directive**
 
 ### The Setup
 
--   We make `TypeSafeMatCellDef` to accept a type parameter `<T>`.
--   `selector: '[matCellDef]'` We use the same `selector` as `MatCellDef`. This is our _monkey-patch_
--   `{ provide: CdkCellDef, useExisting: TypeSafeMatCellDef }` Under the hood, `MatTable` is leveraging **Angular CDK Table** and is providing `MatCellDef` for `CdkCellDef` token. Here, we provide our `TypeSafeMatCellDef` for that same token so `MatTable` continues to work as expected.
--   `extends MatCellDef` We want our **Directive** to inherit the behavior of `MatCellDef`
+- We make `TypeSafeMatCellDef` to accept a type parameter `<T>`.
+- `selector: '[matCellDef]'` We use the same `selector` as `MatCellDef`. This is our _monkey-patch_
+- `{ provide: CdkCellDef, useExisting: TypeSafeMatCellDef }` Under the hood, `MatTable` is leveraging **Angular CDK Table** and is providing `MatCellDef` for `CdkCellDef` token. Here, we provide our `TypeSafeMatCellDef` for that same token so `MatTable` continues to work as expected.
+- `extends MatCellDef` We want our **Directive** to inherit the behavior of `MatCellDef`
 
 ### The Patch
 
--   `@Input() matCellDefDataSource: T[] | Observable<T[]> | MatTableDataSource<T>;` Although we do make our **Directive** to accept a type parameter `<T>`, we will never actually provide the type for the **Directive** directly since the instantiation of directives (or most building blocks in **Angular**) is **Angular** responsibility. This `Input` acts purely as a way for us to pass in the type information. Another thing to note here is that the name of the `@Input()`, we leverage another hidden feature of **Angular**.
-    -   If we name the Inputs of a **Structure Directive** prefixed with the selector, we can use the short-hand syntax when we use this **Directive**
-    ```html
-    <div *ngFor="let item of list;trackBy: trackByFn"></div>
-    ```
-    -   `trackBy` here is actually `@Input() ngForOfTrackBy`
--   `ngTemplateContextGuard` is a [TypeScript Type Guard](https://www.typescriptlang.org/docs/handbook/advanced-types.html#user-defined-type-guards). Here, we essentially say “ctx is of this type. Trust me TypeScript”
+- `@Input() matCellDefDataSource: T[] | Observable<T[]> | MatTableDataSource<T>;` Although we do make our **Directive** to accept a type parameter `<T>`, we will never actually provide the type for the **Directive** directly since the instantiation of directives (or most building blocks in **Angular**) is **Angular** responsibility. This `Input` acts purely as a way for us to pass in the type information. Another thing to note here is that the name of the `@Input()`, we leverage another hidden feature of **Angular**.
+  - If we name the Inputs of a **Structure Directive** prefixed with the selector, we can use the short-hand syntax when we use this **Directive**
+  ```html
+  <div *ngFor="let item of list;trackBy: trackByFn"></div>
+  ```
+  - `trackBy` here is actually `@Input() ngForOfTrackBy`
+- `ngTemplateContextGuard` is a [TypeScript Type Guard](https://www.typescriptlang.org/docs/handbook/advanced-types.html#user-defined-type-guards). Here, we essentially say “ctx is of this type. Trust me TypeScript”
 
 All that is left to do is to declare our `TypeSafeMatCellDef` directive.
 

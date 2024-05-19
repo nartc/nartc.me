@@ -23,41 +23,41 @@ import { DestroyRef } from "@angular/core";
 import { NgtStore } from "angular-three";
 
 export class Model {
-    //              👇 correct usage ✅
-    private store = inject(NgtStore);
-    private destroyRef = inject(DestroyRef);
-    private beforeRenderCleanup = this.store.get("internal").subscribe(() => {
-        /* code to be ran in an animation loop */
-    });
-    private _nonUse_ = this.destroyRef.onDestroy(() => {
-        this.beforeRenderCleanup();
-    });
+	//              👇 correct usage ✅
+	private store = inject(NgtStore);
+	private destroyRef = inject(DestroyRef);
+	private beforeRenderCleanup = this.store.get("internal").subscribe(() => {
+		/* code to be ran in an animation loop */
+	});
+	private _nonUse_ = this.destroyRef.onDestroy(() => {
+		this.beforeRenderCleanup();
+	});
 
-    constructor() {
-        // If we do not need any of the above anywhere else, then constructor is a great spot
-        //                          👇 correct usage ✅
-        const beforeRenderCleanup = inject(NgtStore)
-            .get("internal")
-            .subscribe(() => {
-                /* code to be ran in an animation loop */
-            });
-        inject(DestroyRef).onDestroy(() => {
-            beforeRenderCleanup();
-        });
-    }
+	constructor() {
+		// If we do not need any of the above anywhere else, then constructor is a great spot
+		//                          👇 correct usage ✅
+		const beforeRenderCleanup = inject(NgtStore)
+			.get("internal")
+			.subscribe(() => {
+				/* code to be ran in an animation loop */
+			});
+		inject(DestroyRef).onDestroy(() => {
+			beforeRenderCleanup();
+		});
+	}
 
-    ngOnInit() {
-        //                          👇 going to throw error ❌
-        //                          👇 because ngOnInit isn't an Injection Context
-        const beforeRenderCleanup = inject(NgtStore)
-            .get("internal")
-            .subscribe(() => {
-                /* code to be ran in an animation loop */
-            });
-        inject(DestroyRef).onDestroy(() => {
-            beforeRenderCleanup();
-        });
-    }
+	ngOnInit() {
+		//                          👇 going to throw error ❌
+		//                          👇 because ngOnInit isn't an Injection Context
+		const beforeRenderCleanup = inject(NgtStore)
+			.get("internal")
+			.subscribe(() => {
+				/* code to be ran in an animation loop */
+			});
+		inject(DestroyRef).onDestroy(() => {
+			beforeRenderCleanup();
+		});
+	}
 }
 ```
 
@@ -68,13 +68,13 @@ On the other hand, errors relating to **Injection Context** are harder to spot (
 import { NgtStore } from "angular-three";
 
 export function injectBeforeRender(
-    cb: NgtBeforeRenderRecord["callback"],
-    priority = 0,
+	cb: NgtBeforeRenderRecord["callback"],
+	priority = 0,
 ) {
-    const store = inject(NgtStore);
-    const cleanup = store.get("internal").subscribe(cb, priority, store);
-    inject(DestroyRef).onDestroy(() => void cleanup());
-    return cleanup;
+	const store = inject(NgtStore);
+	const cleanup = store.get("internal").subscribe(cb, priority, store);
+	inject(DestroyRef).onDestroy(() => void cleanup());
+	return cleanup;
 }
 ```
 
@@ -82,11 +82,11 @@ Then, our component can be updated as follow 🎊!
 
 ```ts
 export class Model {
-    constructor() {
-        injectBeforeRender(() => {
-            /* code to be ran in an animation loop */
-        });
-    }
+	constructor() {
+		injectBeforeRender(() => {
+			/* code to be ran in an animation loop */
+		});
+	}
 }
 ```
 
@@ -107,14 +107,14 @@ We now have to pass `renderPriority` in `injectBeforeRender` as the second argum
 
 ```ts
 export class Model {
-    @Input() renderPriority = 0;
+	@Input() renderPriority = 0;
 
-    constructor() {
-        // This won't work because `renderPriority` is always 0
-        injectBeforeRender(() => {
-            /* code to be ran in an animation loop */
-        }, this.renderPriority);
-    }
+	constructor() {
+		// This won't work because `renderPriority` is always 0
+		injectBeforeRender(() => {
+			/* code to be ran in an animation loop */
+		}, this.renderPriority);
+	}
 }
 ```
 
@@ -124,14 +124,14 @@ We know that `ngOnInit` is one of the places where Angular has resolved the Inpu
 
 ```ts
 export class Model {
-    @Input() renderPriority = 0;
+	@Input() renderPriority = 0;
 
-    ngOnInit() {
-        // This won't work because `injectBeforeRender` is invoked outside of an Injection Context
-        injectBeforeRender(() => {
-            /* code to be ran in an animation loop */
-        }, this.renderPriority);
-    }
+	ngOnInit() {
+		// This won't work because `injectBeforeRender` is invoked outside of an Injection Context
+		injectBeforeRender(() => {
+			/* code to be ran in an animation loop */
+		}, this.renderPriority);
+	}
 }
 ```
 
@@ -186,10 +186,10 @@ Half way there! Our `CIF` now has `injector` argument but it has to decide wheth
 
 ```ts
 export function assertInjector(fn: Function, injector?: Injector): Injector {
-    // we only call assertInInjectionContext if there is no custom injector
-    !injector && assertInInjectionContext(fn);
-    // we return the custom injector OR try get the default Injector
-    return injector ?? inject(Injector);
+	// we only call assertInInjectionContext if there is no custom injector
+	!injector && assertInInjectionContext(fn);
+	// we return the custom injector OR try get the default Injector
+	return injector ?? inject(Injector);
 }
 ```
 
@@ -228,37 +228,37 @@ With the above changes, consumers can safely consume our CIF `injectBeforeRender
 
 ```ts
 export class Model {
-    @Input() renderPriority = 0;
+	@Input() renderPriority = 0;
 
-    constructor() {
-        // ✅ no renderPriority, everything works as before
-        injectBeforeRender(() => {
-            /* code to be ran in an animation loop */
-        });
-    }
+	constructor() {
+		// ✅ no renderPriority, everything works as before
+		injectBeforeRender(() => {
+			/* code to be ran in an animation loop */
+		});
+	}
 
-    private injector = inject(Injector);
+	private injector = inject(Injector);
 
-    ngOnInit() {
-        // ✅ works with custom Injector, Input works as well
-        injectBeforeRender(
-            () => {
-                /* code to be ran in an animation loop */
-            },
-            {
-                priority: this.renderPriority,
-                injector: this.injector,
-            },
-        );
+	ngOnInit() {
+		// ✅ works with custom Injector, Input works as well
+		injectBeforeRender(
+			() => {
+				/* code to be ran in an animation loop */
+			},
+			{
+				priority: this.renderPriority,
+				injector: this.injector,
+			},
+		);
 
-        // ✅ throws a clear error that "injectBeforeRender" is invoked outside of an Injection Context
-        injectBeforeRender(
-            () => {
-                /* code to be ran in an animation loop */
-            },
-            { priority: this.renderPriority },
-        );
-    }
+		// ✅ throws a clear error that "injectBeforeRender" is invoked outside of an Injection Context
+		injectBeforeRender(
+			() => {
+				/* code to be ran in an animation loop */
+			},
+			{ priority: this.renderPriority },
+		);
+	}
 }
 ```
 

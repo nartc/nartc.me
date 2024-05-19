@@ -14,17 +14,17 @@ Now, let's take a quick look at Component, Directive, and Pipe
 
 ```ts
 @Component({
-    /*...*/
+	/*...*/
 })
 export class UserComponent {}
 
 @Directive({
-    /*...*/
+	/*...*/
 })
 export class UserDirective {}
 
 @Pipe({
-    /*...*/
+	/*...*/
 })
 export class UserPipe {}
 ```
@@ -37,21 +37,21 @@ Yes, we have **Service**, _the lord of general usage_. If you haven't noticed, G
 
 Let's say we have a `GithubUserService`, that is `providedIn: 'root'`, with the following requirements:
 
--   It needs to inject `HttpClient` to make network calls
--   It needs to expose a method `searchUser(query?: string)` to search for Github users based on a query
+- It needs to inject `HttpClient` to make network calls
+- It needs to expose a method `searchUser(query?: string)` to search for Github users based on a query
 
 Any Angular developer should be able to write this Service in a heartbeat
 
 ```ts
 @Injectable({ providedIn: "root" })
 export class GithubUserService {
-    private readonly http = inject(HttpClient);
-    // or using true-private field
-    // readonly #http = inject(HttpClient);
+	private readonly http = inject(HttpClient);
+	// or using true-private field
+	// readonly #http = inject(HttpClient);
 
-    searchUser(query = "") {
-        return this.http.get<GithubUser[]>(`path/to/github-api?q=${query}`);
-    }
+	searchUser(query = "") {
+		return this.http.get<GithubUser[]>(`path/to/github-api?q=${query}`);
+	}
 }
 ```
 
@@ -70,10 +70,10 @@ Let's rewrite `GithubUserService` using `InjectionToken`. For this, we'll have t
 ```ts
 // github-user.factory.ts
 export function githubUserServiceFactory(http: HttpClient) {
-    return {
-        searchUser: (query = "") =>
-            http.get<GithubUser[]>(`path/to/github-api?q=${query}`),
-    };
+	return {
+		searchUser: (query = "") =>
+			http.get<GithubUser[]>(`path/to/github-api?q=${query}`),
+	};
 }
 
 // utilize TypeScript Utility Types
@@ -83,8 +83,8 @@ export type GithubUserServiceApi = ReturnType<typeof githubUserServiceFactory>;
 ```ts
 // github-user.token.ts
 export const GITHUB_USER_SERVICE = new InjectionToken<GithubUserServiceApi>(
-    "Github User Service",
-    { factory: () => githubUserServiceFactory(inject(HttpClient)) },
+	"Github User Service",
+	{ factory: () => githubUserServiceFactory(inject(HttpClient)) },
 );
 ```
 
@@ -108,17 +108,17 @@ As far as testing goes, we only care about testing our implementation details, `
 
 ```ts
 describe(githubUserServiceFactory.name, () => {
-    let mockedHttpClient: jasmine.SpyObj<HttpClient>;
-    let service: GithubUserServiceApi;
+	let mockedHttpClient: jasmine.SpyObj<HttpClient>;
+	let service: GithubUserServiceApi;
 
-    beforeEach(() => {
-        mockedHttpClient = jasmine.createSpyObj(/*...*/);
-        service = githubUserServiceFactory(mockedHttpClient);
-    });
+	beforeEach(() => {
+		mockedHttpClient = jasmine.createSpyObj(/*...*/);
+		service = githubUserServiceFactory(mockedHttpClient);
+	});
 
-    it("should search user", () => {
-        /* test searchUser */
-    });
+	it("should search user", () => {
+		/* test searchUser */
+	});
 });
 ```
 
@@ -142,11 +142,11 @@ When we use this in a Component, our code looks like the following:
 ```ts
 @Component(/*...*/)
 export class UserComponent {
-    private readonly searchGithubUser = inject(GITHUB_USER_SEARCH);
+	private readonly searchGithubUser = inject(GITHUB_USER_SEARCH);
 
-    readonly users$ = this.query$.pipe(
-        switchMap((query) => this.searchGithubUser(query)),
-    );
+	readonly users$ = this.query$.pipe(
+		switchMap((query) => this.searchGithubUser(query)),
+	);
 }
 ```
 
@@ -158,21 +158,21 @@ As of this moment, the only life-cycle hook that we care about for Services is `
 
 ```ts
 export function githubUserServiceFactory(
-    http: HttpClient,
-    destroyRef: DestroyRef,
+	http: HttpClient,
+	destroyRef: DestroyRef,
 ) {
-    const query$ = new BehaviorSubject("");
+	const query$ = new BehaviorSubject("");
 
-    destroyRef.onDestroy(() => {
-        query$.complete();
-    });
+	destroyRef.onDestroy(() => {
+		query$.complete();
+	});
 
-    return {
-        setQuery: (query: string) => void query.next(query),
-        users$: query$.pipe(
-            switchMap((query) => http.get(`path/to/github-api?q=${query}`)),
-        ),
-    };
+	return {
+		setQuery: (query: string) => void query.next(query),
+		users$: query$.pipe(
+			switchMap((query) => http.get(`path/to/github-api?q=${query}`)),
+		),
+	};
 }
 
 export type GithubUserServiceApi = ReturnType<typeof githubUserServiceFactory>;
@@ -182,16 +182,16 @@ With this, let's assume that our Service is no longer a Root Service so we need 
 
 ```ts
 export const GITHUB_USER_SERVICE = new InjectionToken<GithubUserServiceApi>(
-    "Github User Service",
+	"Github User Service",
 );
 
 export function provideGithubUserService() {
-    return {
-        provide: GITHUB_USER_SERVICE,
-        useFactory: githubUserServiceFactory,
-        // let Angular DI knows what our Factory needs
-        deps: [HttpClient, DestroyRef],
-    };
+	return {
+		provide: GITHUB_USER_SERVICE,
+		useFactory: githubUserServiceFactory,
+		// let Angular DI knows what our Factory needs
+		deps: [HttpClient, DestroyRef],
+	};
 }
 ```
 
@@ -199,16 +199,16 @@ We're ready to use this in **ANY** Component that needs `GithubUserServiceApi`
 
 ```ts
 @Component({
-    template: `
-        <input (input)="githubUserService.setQuery($event.target.value)" />
-        <ul>
-            <li *ngFor="let user of githubUserService.users$ | async"></li>
-        </ul>
-    `,
-    providers: [provideGithubUserService()],
+	template: `
+		<input (input)="githubUserService.setQuery($event.target.value)" />
+		<ul>
+			<li *ngFor="let user of githubUserService.users$ | async"></li>
+		</ul>
+	`,
+	providers: [provideGithubUserService()],
 })
 export class UserComponent {
-    readonly githubUserService = inject(GITHUB_USER_SERVICE);
+	readonly githubUserService = inject(GITHUB_USER_SERVICE);
 }
 ```
 
@@ -220,14 +220,14 @@ Usually, the way to consume these APIs is to `extends ComponentStore<>` or `exte
 
 ```ts
 export function userStoreFactory(destroyRef: DestroyRef) {
-    const store = new ComponentStore(initialUserState);
+	const store = new ComponentStore(initialUserState);
 
-    destroyRef.onDestroy(() => {
-        // let's call ngOnDestroy manually here
-        store.ngOnDestroy();
-    });
+	destroyRef.onDestroy(() => {
+		// let's call ngOnDestroy manually here
+		store.ngOnDestroy();
+	});
 
-    // now we can work with ComponentStore API and return exactly what we need
+	// now we can work with ComponentStore API and return exactly what we need
 }
 
 export type UserStoreApi = ReturnType<typeof userStoreFactory>;
@@ -236,11 +236,11 @@ export type UserStoreApi = ReturnType<typeof userStoreFactory>;
 ```ts
 export const USER_STORE = new InjectionToken<UserStoreApi>("UserStore");
 export function provideUserStore() {
-    return {
-        provide: USER_STORE,
-        useFactory: userStoreFactory,
-        deps: [DestroyRef],
-    };
+	return {
+		provide: USER_STORE,
+		useFactory: userStoreFactory,
+		deps: [DestroyRef],
+	};
 }
 ```
 
@@ -252,22 +252,22 @@ Alternatively, we can provide then inject `ComponentStore` instead of `new Compo
 
 ```ts
 export function userStoreFactory(store: ComponentStore<UserState>) {
-    // work with ComponentStore API and return exactly what we need
+	// work with ComponentStore API and return exactly what we need
 }
 ```
 
 ```ts
 export const USER_STORE = new InjectionToken<UserStoreApi>("UserStore");
 export function provideUserStore(initialUserState: Partial<UserState> = {}) {
-    return [
-        ComponentStore,
-        { provide: INITIAL_STATE_TOKEN, useValue: initialUserState },
-        {
-            provide: USER_STORE,
-            useFactory: userStoreFactory,
-            deps: [ComponentStore],
-        },
-    ];
+	return [
+		ComponentStore,
+		{ provide: INITIAL_STATE_TOKEN, useValue: initialUserState },
+		{
+			provide: USER_STORE,
+			useFactory: userStoreFactory,
+			deps: [ComponentStore],
+		},
+	];
 }
 ```
 
@@ -283,10 +283,10 @@ On the other hand, we can turn our `userStoreFactory` into a higher-order functi
 
 ```ts
 export function userStoreFactory(initialState: UserState) {
-    return (destroyRef: DestroyRef) => {
-        const store = new ComponentStore(initialState);
-        /* ... */
-    };
+	return (destroyRef: DestroyRef) => {
+		const store = new ComponentStore(initialState);
+		/* ... */
+	};
 }
 
 // double return type 😎
@@ -297,11 +297,11 @@ export type UserStoreApi = ReturnType<ReturnType<typeof userStoreFactory>>;
 export const USER_STORE = new InjectionToken<UserStoreApi>("User Store");
 
 export function provideUserStore(initialState: UserState) {
-    return {
-        provide: USER_STORE,
-        useFactory: userStoreFactory(initialState),
-        deps: [DestroyRef],
-    };
+	return {
+		provide: USER_STORE,
+		useFactory: userStoreFactory(initialState),
+		deps: [DestroyRef],
+	};
 }
 ```
 
@@ -331,10 +331,10 @@ Yes, it is a bit verbose. We can always abstract the creation of the Injection T
 
 ```ts
 export const [injectFn, provideFn, TOKEN] = createInjectionToken(theFactory, {
-    deps: [
-        /*...*/
-    ],
-    isRoot: boolean,
+	deps: [
+		/*...*/
+	],
+	isRoot: boolean,
 });
 ```
 
@@ -348,7 +348,7 @@ It is a unfortunate because `DestroyRef` really does help. In older versions, yo
 const viewRef = inject(ChangeDetectorRef) as ViewRef;
 
 queueMicrotask(() => {
-    viewRef.onDestroy(() => {});
+	viewRef.onDestroy(() => {});
 });
 ```
 
@@ -364,10 +364,10 @@ I did not think about this when I write the blog post but I think I subconscious
 
 This blog post is a bit in the exploratory space so I asked several of my friends in the community to review
 
--   [Enea Jahollari](https://twitter.com/Enea_Jahollari)
--   [Brandon Roberts](https://twitter.com/brandontroberts)
--   [Jason Warner](https://twitter.com/xocomil_1)
--   [Tomas Trajan](https://twitter.com/tomastrajan)
--   [Justin Rassier](https://twitter.com/justinrassier)
--   [Ady Ngom](https://twitter.com/adyngom)
--   [Colum Ferry](https://twitter.com/FerryColum)
+- [Enea Jahollari](https://twitter.com/Enea_Jahollari)
+- [Brandon Roberts](https://twitter.com/brandontroberts)
+- [Jason Warner](https://twitter.com/xocomil_1)
+- [Tomas Trajan](https://twitter.com/tomastrajan)
+- [Justin Rassier](https://twitter.com/justinrassier)
+- [Ady Ngom](https://twitter.com/adyngom)
+- [Colum Ferry](https://twitter.com/FerryColum)

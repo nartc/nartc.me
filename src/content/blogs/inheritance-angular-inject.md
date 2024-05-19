@@ -13,11 +13,11 @@ Take a look at the following class:
 ```tsx
 @Directive()
 export abstract class Instance<TObject> {
-    constructor(
-        protected serviceOne: ServiceOne,
-        protected serviceTwo: ServiceTwo,
-        protected tokenOne: TokenOne, // the list can go on and on
-    ) {}
+	constructor(
+		protected serviceOne: ServiceOne,
+		protected serviceTwo: ServiceTwo,
+		protected tokenOne: TokenOne, // the list can go on and on
+	) {}
 }
 ```
 
@@ -25,37 +25,37 @@ This is how one would construct an `abstract class` in Angular and set up Depend
 
 ```tsx
 @Component({
-    providers: [
-        /* Concrete class can also override the dependencies here if needed */
-    ],
+	providers: [
+		/* Concrete class can also override the dependencies here if needed */
+	],
 })
 export class Concrete extends Instance<SomeConcreteEntity> {
-    // this.serviceOne is available
-    // this.serviceTwo is available
-    // this.tokenOne is available
+	// this.serviceOne is available
+	// this.serviceTwo is available
+	// this.tokenOne is available
 }
 ```
 
 Thanks to how Angular resolves Dependency Injection, `Concrete` class automatically receives those Injectables **assuming** that:
 
--   `Concrete` does **not** need extra injectables
--   `Concrete` constructor is expected to be the **same** as `Instance` constructor
+- `Concrete` does **not** need extra injectables
+- `Concrete` constructor is expected to be the **same** as `Instance` constructor
 
 The above constraints are limiting to what we can do with `Instance`'s sub-classes. What if we have extra logic in the sub-class constructor? What if we need to inject more Injectables into the sub-class? Let’s see an example
 
 ```tsx
 @Component()
 export class ConcreteTwo extends Instance<SomeConcreteTwoEntity> {
-    // Extreme verbose constructor repeating the injectables 🥲
-    constructor(
-        serviceOne: ServiceOne,
-        serviceTwo: ServiceTwo,
-        tokenOne: TokenOne,
-        private theOneConcreteTwoNeeds: TheOne,
-    ) {
-        // because we need to call super() and pass those injectables for the base class
-        super(serviceOne, serviceTwo, tokenOne);
-    }
+	// Extreme verbose constructor repeating the injectables 🥲
+	constructor(
+		serviceOne: ServiceOne,
+		serviceTwo: ServiceTwo,
+		tokenOne: TokenOne,
+		private theOneConcreteTwoNeeds: TheOne,
+	) {
+		// because we need to call super() and pass those injectables for the base class
+		super(serviceOne, serviceTwo, tokenOne);
+	}
 }
 ```
 
@@ -66,14 +66,14 @@ We can convert the Inheritance here to Composition by bringing the logic in `Ins
 ```tsx
 @Injectable()
 export class InstanceService {
-    constructor /** same DIs as abstract class Instance **/() {}
+	constructor /** same DIs as abstract class Instance **/() {}
 
-    /* however, InstanceService does not have ngOnInit life-cycle
-     * so we need to implement some method to call in the component
-     */
-    init() {
-        // some init logic
-    }
+	/* however, InstanceService does not have ngOnInit life-cycle
+	 * so we need to implement some method to call in the component
+	 */
+	init() {
+		// some init logic
+	}
 }
 ```
 
@@ -81,21 +81,21 @@ Then use the `InstanceService` as follow
 
 ```tsx
 @Component({
-    providers: [InstanceService],
+	providers: [InstanceService],
 })
 export class Concrete {
-    constructor(private instanceService: InstanceService) {}
+	constructor(private instanceService: InstanceService) {}
 
-    ngOnInit() {
-        this.instanceService.init();
-    }
+	ngOnInit() {
+		this.instanceService.init();
+	}
 }
 ```
 
 This way if `InstanceService` changes in the future, `Concrete` might not need to change its code or tests. However, there are some caveats:
 
--   Services do not have `@Input()` and `@Output()`, what if our `Instance` base class has some common inputs and outputs? There are ways to achieve this but it is verbose, error-prone, and repetitive. Eg: We can have Subjects in the Service and use Setter Inputs to push data through those Subjects
--   Because Services do not have `ngOnInit` life-cycle, ALL components that inject `InstanceService` need to manually call `init()` method
+- Services do not have `@Input()` and `@Output()`, what if our `Instance` base class has some common inputs and outputs? There are ways to achieve this but it is verbose, error-prone, and repetitive. Eg: We can have Subjects in the Service and use Setter Inputs to push data through those Subjects
+- Because Services do not have `ngOnInit` life-cycle, ALL components that inject `InstanceService` need to manually call `init()` method
 
 Well, Angular 14 comes with a fix that maybe, just maybe, makes Inheritance in Angular viable again
 
@@ -105,11 +105,11 @@ Here’s the [official documentation on `inject()`](https://angular.io/api/core/
 
 ```tsx
 export const MY_TOKEN = new InjectionToken("My Token", {
-    factory: () => {
-        // we can inject Root Injectables here
-        const someOtherToken = inject(SOME_OTHER_TOKEN); // assume SOME_OTHER_TOKEN is provided on the Root injector
-        return someOtherToken.someProperty;
-    },
+	factory: () => {
+		// we can inject Root Injectables here
+		const someOtherToken = inject(SOME_OTHER_TOKEN); // assume SOME_OTHER_TOKEN is provided on the Root injector
+		return someOtherToken.someProperty;
+	},
 });
 ```
 
@@ -120,9 +120,9 @@ The PR makes it possible to use `inject()` in a component’s constructor. One m
 ```tsx
 @Directive()
 export abstract class Instance<TObject> {
-    protected serviceOne = inject(ServiceOne);
-    protected serviceTwo = inject(ServiceTwo);
-    protected tokenOne = inject(TokenOne);
+	protected serviceOne = inject(ServiceOne);
+	protected serviceTwo = inject(ServiceTwo);
+	protected tokenOne = inject(TokenOne);
 }
 ```
 
@@ -131,11 +131,11 @@ Then our `Concrete`
 ```tsx
 @Component()
 export class Concrete extends Instance<SomeConcreteEntity> {
-    // this.serviceOne, this.serviceTwo, this.tokenOne are all available here
+	// this.serviceOne, this.serviceTwo, this.tokenOne are all available here
 
-    constructor(private theOneThatConcreteNeeds: TheOne) {
-        super();
-    }
+	constructor(private theOneThatConcreteNeeds: TheOne) {
+		super();
+	}
 }
 ```
 
@@ -144,9 +144,9 @@ This fixes our issue above 🤯! What’s more? `Instance` can have Inputs, Outp
 ```tsx
 @Directive()
 export abstract class Instance<TObject> {
-    ngOnInit() {
-        // do initialization stuffs here. Sub-classes will inherit this
-    }
+	ngOnInit() {
+		// do initialization stuffs here. Sub-classes will inherit this
+	}
 }
 ```
 

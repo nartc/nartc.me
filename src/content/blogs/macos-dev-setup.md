@@ -40,19 +40,19 @@ Please check out [this guide](https://sourabhbajaj.com/mac-setup/SystemPreferenc
 
 After finishing installing, you can run `brew doctor` to ensure everything is installed correctly.
 
--   To search for a package (formulae/cask)
+- To search for a package (formulae/cask)
 
 ```bash
 brew search package_name
 ```
 
--   To install a `formulae`
+- To install a `formulae`
 
 ```bash
 brew install formulae_name
 ```
 
--   To install a `cask`
+- To install a `cask`
 
 ```bash
 brew install --cask cask_name
@@ -139,10 +139,10 @@ alias listios="xcrun simctl list devices"
 
 **5. Preferences**
 
--   Turn on Natural Text Editing by `Preferences -> Profiles -> Keys -> Select Presets -> Natural Text Editing`. This allows you to use the Options/Command keys to move your cursor freely.
--   Setup some Status Bars by `Preferences -> Profiles -> Sessions -> check Status Bar Enabled -> Configure Status Bar` to select your favorite status bars.
--   Change the font of the terminal by `Preferences -> Profiles -> Text`. I use `MesloLGS NF` with `14pt` font size
--   Last but not least, change to your favorite theme by `Preferences -> Profiles -> Colors`. Check [https://iterm2colorschemes.com/](https://iterm2colorschemes.com/) for a collection of Iterm2 Themes
+- Turn on Natural Text Editing by `Preferences -> Profiles -> Keys -> Select Presets -> Natural Text Editing`. This allows you to use the Options/Command keys to move your cursor freely.
+- Setup some Status Bars by `Preferences -> Profiles -> Sessions -> check Status Bar Enabled -> Configure Status Bar` to select your favorite status bars.
+- Change the font of the terminal by `Preferences -> Profiles -> Text`. I use `MesloLGS NF` with `14pt` font size
+- Last but not least, change to your favorite theme by `Preferences -> Profiles -> Colors`. Check [https://iterm2colorschemes.com/](https://iterm2colorschemes.com/) for a collection of Iterm2 Themes
 
 ## 7. Alfred
 
@@ -158,7 +158,7 @@ brew install --cask alfred
 
 ### Customization
 
--   Check `Launch Alfred at login` and change your hotkey to `⌘ Space` (or anything you’d like) then you should be good to go
+- Check `Launch Alfred at login` and change your hotkey to `⌘ Space` (or anything you’d like) then you should be good to go
 
 ## 8. Browsers
 
@@ -176,12 +176,12 @@ To install NodeJS, we are going to utilize `nvm` which is short for `Node Versio
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
 ```
 
--   Verify that you have `nvm` installed by running `nvm --version` in the terminal. Restart your terminal might help
--   To install the latest version of node, simply run `nvm install node`
--   To install the latest version of any specific major version, simply run `nvm install version` (eg: `nvm install 12` will install the latest Node 12.x.x)
--   To use a specific Node version, run `nvm use <version>`
--   To list all installed versions, run `nvm ls`
--   To list all available versions, run `nvm ls-remote`
+- Verify that you have `nvm` installed by running `nvm --version` in the terminal. Restart your terminal might help
+- To install the latest version of node, simply run `nvm install node`
+- To install the latest version of any specific major version, simply run `nvm install version` (eg: `nvm install 12` will install the latest Node 12.x.x)
+- To use a specific Node version, run `nvm use <version>`
+- To list all installed versions, run `nvm ls`
+- To list all available versions, run `nvm ls-remote`
 
 ## 10. Python
 
@@ -197,8 +197,8 @@ Afterwards, update your `PATH`
 echo 'eval "$(pyenv init -)"' >> ~/.zshrc
 ```
 
--   To list all available Python versions, run `pyenv install --list` (restart your terminal if you run into issues)
--   To install a Python version, simply run `pyenv install <version>`. I usually pick the latest 2.x and the latest 3.x from the list.
+- To list all available Python versions, run `pyenv install --list` (restart your terminal if you run into issues)
+- To install a Python version, simply run `pyenv install <version>`. I usually pick the latest 2.x and the latest 3.x from the list.
 
 ## 11. Git GUI
 

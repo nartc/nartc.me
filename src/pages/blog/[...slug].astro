@@ -67,6 +67,7 @@ const { Content } = await entry.render();
 		isProduction && (
 			<div>
 				<script
+					is:inline
 					src="https://giscus.app/client.js"
 					data-repo="nartc/tnc-scully"
 					data-repo-id="MDEwOlJlcG9zaXRvcnkyNjgzNzE2Mjc="
@@ -318,6 +319,7 @@ const { Content } = await entry.render();
 
 	.blog-content ul[role="tablist"] {
 		--sl-color-gray-5: var(--gray-light);
+		list-style-type: none;
 		@apply mx-0 mb-0 mt-4;
 	}
 

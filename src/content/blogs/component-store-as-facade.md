@@ -19,24 +19,24 @@ The following code snippet is a Component interacting with the NgRx Store direct
 
 ```ts
 @Component({
-    /* hidden for readability */
+	/* hidden for readability */
 })
 export class BooksPageComponent {
-    readonly books$ = this.store.select(booksSelector);
+	readonly books$ = this.store.select(booksSelector);
 
-    constructor(private store: Store) {}
+	constructor(private store: Store) {}
 
-    addBook(book: Book) {
-        this.store.dispatch(BooksPage.addBook(book));
-    }
+	addBook(book: Book) {
+		this.store.dispatch(BooksPage.addBook(book));
+	}
 
-    deleteBook(id: string) {
-        this.store.dispatch(BooksPage.deleteBook(id));
-    }
+	deleteBook(id: string) {
+		this.store.dispatch(BooksPage.deleteBook(id));
+	}
 
-    updateBook(book: Book) {
-        this.store.dispatch(BooksPage.updateBook(book));
-    }
+	updateBook(book: Book) {
+		this.store.dispatch(BooksPage.updateBook(book));
+	}
 }
 ```
 
@@ -45,21 +45,21 @@ With a Facade, we will end up with the following
 ```ts
 @Injectable({ providedIn: "root" })
 export class BooksFacade {
-    readonly books$ = this.store.select(booksSelector);
+	readonly books$ = this.store.select(booksSelector);
 
-    constructor(private store: Store) {}
+	constructor(private store: Store) {}
 
-    addBook(book: Book) {
-        this.store.dispatch(addBook(book));
-    }
+	addBook(book: Book) {
+		this.store.dispatch(addBook(book));
+	}
 
-    deleteBook(id: string) {
-        this.store.dispatch(deleteBook(id));
-    }
+	deleteBook(id: string) {
+		this.store.dispatch(deleteBook(id));
+	}
 
-    updateBook(book: Book) {
-        this.store.dispatch(updateBook(book));
-    }
+	updateBook(book: Book) {
+		this.store.dispatch(updateBook(book));
+	}
 }
 ```
 
@@ -67,24 +67,24 @@ Then our Component uses the Facade
 
 ```ts
 @Component({
-    /*...*/
+	/*...*/
 })
 export class BooksPageComponent {
-    readonly books$ = this.booksFacade.books$;
+	readonly books$ = this.booksFacade.books$;
 
-    constructor(private booksFacade: BooksFacade) {}
+	constructor(private booksFacade: BooksFacade) {}
 
-    addBook(book: Book) {
-        this.booksFacade.addBook(book);
-    }
+	addBook(book: Book) {
+		this.booksFacade.addBook(book);
+	}
 
-    deleteBook(id: string) {
-        this.booksFacade.deleteBook(id);
-    }
+	deleteBook(id: string) {
+		this.booksFacade.deleteBook(id);
+	}
 
-    updateBook(book: Book) {
-        this.booksFacade.updateBook(book);
-    }
+	updateBook(book: Book) {
+		this.booksFacade.updateBook(book);
+	}
 }
 ```
 
