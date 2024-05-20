@@ -7,12 +7,14 @@ export async function GET(context) {
 		title: "Chau Tran blog",
 		description: "Personal blog of Chau Tran (nartc)",
 		site: context.site,
-		items: blogs.map((blog) => ({
-			title: blog.data.title,
-			link: context.url.origin + `/blog/${blog.slug}`,
-			pubDate: blog.data.publishedAt,
-			description: blog.data.description,
-		})),
+		items: blogs
+			.filter((blog) => !blog.data.draft)
+			.map((blog) => ({
+				title: blog.data.title,
+				link: context.url.origin + `/blog/${blog.slug}`,
+				pubDate: blog.data.publishedAt,
+				description: blog.data.description,
+			})),
 		stylesheet: "/rss/styles.xsl",
 	});
 }
