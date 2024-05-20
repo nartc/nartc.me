@@ -15,7 +15,7 @@ I am working on a library called [Angular Three](https://angular-three.netlify.a
 ![A spinning cube with mouse interactions](https://i.imgur.com/tMYyDEY.gif)
 _A spinning cube with mouse interactions_
 
-```tsx
+```angular-ts
 @Component({
 	selector: "ngt-cube",
 	template: `
@@ -58,7 +58,7 @@ We are going to fix that in this blog post.
 
 The naive approach would be to change the `style.cursor` on the `document.body`, and we can do this because we can listen to `(pointerover)` and `(pointerout)` events on the cube. Let's change our code to implement this:
 
-```tsx
+```angular-ts
 @Component({
 	selector: "ngt-cube",
 	template: `
@@ -94,7 +94,7 @@ export class CubeComponent {
 
 Everything should be the same as before. Let’s actually start with the fix
 
-```tsx
+```angular-ts
 @Component({
 	selector: "ngt-cube",
 	template: `
@@ -167,7 +167,7 @@ In Angular, you can attach Attribute Directives on any elements on the DOM, and 
 
 A context is an environment that the Directive is created with. In other words, what is available for this Directive to access via Angular’s Dependency Injection based on where it is attached.
 
-```tsx
+```angular-ts
 @Directive({
 	selector: "[some]",
 })
@@ -181,7 +181,7 @@ Here’s how `SomeDirective` might be used/attached:
 
 **HTML Elements**
 
-```html
+```angular-html
 <div some></div>
 <button some></button>
 ```
@@ -190,7 +190,7 @@ When a Directive is attached on an `HTMLElement`, the Directive will have access
 
 - `ElementRef<TElement>`: where `TElement` is the actual type of the element. Eg: `<button>` is `HTMLButtonElement`, `<div>` is `HTMLDivElement`. `ElementRef` is the reference to the DOM element that is rendered, like what you would see in the Element Dev Tool.
 
-```tsx
+```angular-ts
 @Directive({
 	/*...*/
 })
@@ -201,7 +201,7 @@ export class SomeDirective {
 
 **Component**
 
-```html
+```angular-html
 <some-component some></some-component>
 ```
 
@@ -210,7 +210,7 @@ When a Directive is attached on a Component, the Directive will have access to:
 - `ElementRef<HTMLElement>`: same as above
 - `TComponent`: where `TComponent` is the type of the Component. The Directive has access to the instance of the Component that Angular creates.
 
-```tsx
+```angular-ts
 @Directive({
 	/*...*/
 })
@@ -226,7 +226,7 @@ export class SomeDirective {
 
 **ng-template**
 
-```html
+```angular-html
 <ng-template some></ng-template>
 ```
 
@@ -235,7 +235,7 @@ When a Directive is attached on `ng-template`, the Directive will have access to
 - `ElementRef<Comment>`: When you render `ng-template`, Angular will put a comment: `<!-- container -->` in its place. This comment will be available for the Directive via `ElementRef<Comment>`
 - `TemplateRef<any>`: The `TemplateRef` instance.
 
-```tsx
+```angular-ts
 @Directive({/*...*/})
 export class SomeDirective {
 	constructor(
@@ -258,7 +258,7 @@ In addition to the above, the Directive also has access to the Hierarchical Inje
 
 - Other directives
 
-```html
+```angular-html
 <input [ngModel]="name" some />
 ```
 
@@ -266,13 +266,13 @@ In addition to the above, the Directive also has access to the Hierarchical Inje
 
 - Component’s Providers
 
-```html
+```angular-html
 <some-component some></some-component>
 ```
 
 `SomeDirective` has access to anything that is provided in `SomeComponent`'s providers
 
-```tsx
+```angular-ts
 @Component({
 	/*...*/,
              // 👇 this will also be made available to SomeDirective
@@ -283,7 +283,7 @@ export class SomeComponent {}
 
 `SomeDirective` also has access to `SomeComponent`'s ancestors’ Injector
 
-```html
+```angular-html
 <some-parent>
 	<some-component some></some-component>
 </some-parent>
@@ -302,7 +302,7 @@ _Checking `Injector` in the console_
 
 One powerful feature of Angular Directives is specifying the `selector` like CSS Selectors. Let’s bring back our `SomeDirective`
 
-```tsx
+```angular-ts
 @Directive({
 	selector: "[some]",
 })
@@ -311,7 +311,7 @@ export class SomeDirective {}
 
 Let's also assume that `SomeDirective` will **ALWAYS** need to be there whenever `SomeComponent` is used. In other words, `SomeDirective` handles some certain logic for `SomeComponent` that is extracted out of the Component to achieve Separation of Concern. Having to do the following is tedious
 
-```html
+```angular-html
 <some-component some></some-component>
 <some-component some></some-component>
 <some-component some></some-component>
@@ -321,7 +321,7 @@ Let's also assume that `SomeDirective` will **ALWAYS** need to be there whenever
 
 Instead, we can change `SomeDirective`'s `selector` to `some-component` so that it will get instantiated in the same manner as `SomeComponent`
 
-```tsx
+```angular-ts
 @Directive({
 	// 👇 nothing really prevents you from doing this
 	selector: "some-component",
@@ -341,7 +341,7 @@ Now that we have all that information, we can continue on our proper fix to the 
 
 Start by creating a Directive (you can use the Angular CLI if you want to)
 
-```tsx
+```angular-ts
 @Directive({
 	selector: "[cursorPointer]",
 })
@@ -352,13 +352,13 @@ export class CursorPointerDirective {
 
 This is how we would want to use `CursorPointerDirective`
 
-```html
+```angular-html
 <ngt-mesh cursorPointer></ngt-mesh>
 ```
 
 The job of `CursorPointerDirective` is to listen to the pointers’ events and update `document.body` style. Let’s fill the directive up
 
-```tsx
+```angular-ts
 @Directive({
 	selector: "[cursorPointer]",
 })
@@ -384,7 +384,7 @@ export class CursorPointerDirective implements OnDestroy {
 
 That is all the prep work we need for `CursorPointerDirective`. Now, the **listening** part:
 
-```tsx
+```angular-ts
 @Directive({
 	selector: "[cursorPointer]",
 })
@@ -424,21 +424,20 @@ export class CursorPointerDirective implements OnDestroy {
 
 That's it! Now we can use `cursorPointer` on `ngt-mesh` and see the result:
 
-```tsx
+```angular-ts 'cursorPointer'
 @Component({
 	selector: "ngt-cube",
 	template: `
         <ngt-soba-box
             #sobaBox
-            <!-- 👇this is it. ngtCursor is Angular Three equivalent to cursorPointer -->
-            ngtCursor
+            cursorPointer
             [ngtBoxHelper]="['black']"
-            (animateReady)="onAnimateReady(sobaBox.object)" 
-            (click)="active = !active" 
-            (pointerover)="hover = true" 
+            (animateReady)="onAnimateReady(sobaBox.object)"
+            (click)="active = !active"
+            (pointerover)="hover = true"
             (pointerout)="hover = false"
             [isMaterialArray]="true"
-            [scale]="active ? [1.5, 1.5, 1.5] : [1, 1,1]" 
+            [scale]="active ? [1.5, 1.5, 1.5] : [1, 1,1]"
         >
             <ngt-cube-materials [hover]="hover"></ngt-cube-materials>
         </ngt-soba-box>

@@ -239,7 +239,7 @@ By adding an **Attribute Binding** and a **Property Binding** to our template, t
 
 An important point to note is that `property` instruction is part of the `Update` phase which means that **Property Binding** does not happen until the `Update` phase. To many Angular developers, this is commonly known as _"when the Change Detection runs and updates the template's bindings"_. As a side note, we can connect this knowledge back to _"When is an Input resolved in Angular component?"_, it actually makes more sense now, doesn't it?
 
-```ts
+```angular-ts
 @Component({
 	selector: "my-cmp",
 })
@@ -282,7 +282,7 @@ Let's bring back our `angular-three` template that creates a `Mesh`
 As we learned above, `MeshBasicMaterial` parameters can be **safely** set after the material is created. Hence,
 we can **safely** rely on Property Bindings to set parameters for `MeshBasicMaterial`.
 
-```html
+```angular-html
 <ngt-mesh>
 	<ngt-box-geometry />
 	<ngt-mesh-basic-material [color]="materialColor" />
@@ -317,7 +317,7 @@ Yes, this phrasing reminds us of Structural Directives. These directives evaluat
 
 To model passing in construction arguments to THREE.js entities, `angular-three` provides a directive called `NgtArgs` and it is used like this
 
-```html
+```angular-html
 <!-- new THREE.BoxGeometry(1, 1, 1) -->
 <ngt-box-geometry *args="[1, 1, 1]" />
 <!-- new OrbitControls(camera, domElement) -->
@@ -328,7 +328,7 @@ Why don't we re-build `NgtArgs` to see how it works?
 
 <Tabs>
     <TabItem label="args.directive.ts">
-```ts
+```angular-ts
 @Directive({
     selector: '[args]',
     standalone: true
@@ -350,7 +350,7 @@ export class NgtArgs {
 ```
     </TabItem>
     <TabItem label="HTML"> 
-```html
+```angular-html
 <ngt-box-geometry *args="[1, 1, 1]" />
 ```
     </TabItem>
@@ -381,13 +381,13 @@ This is a very tricky problem because we can see that `createElement` **does not
 
 Once again, here's our template with `*args` structural directive
 
-```html
+```angular-html
 <ngt-box-geometry *args="[1, 1, 1]" />
 ```
 
 For folks that are not aware, `*args` is the [short-hand syntax](https://angular.dev/guide/directives/structural-directives#structural-directive-syntax-reference) for Structural Directive. The `*` syntax is expanded in to the following long form
 
-```html
+```angular-html
 <ng-template [args]="[1, 1, 1]">
 	<ngt-box-geometry />
 </ng-template>
@@ -457,7 +457,7 @@ createComment(value: string) {
 
 Tracking the `Comment` alone will not be enough, we need the `Injector` which allows us to access the `NgtArgs` instance. Let's go back to `NgtArgs` and add some code
 
-```ts
+```angular-ts
 @Directive({
 	selector: "[args]",
 	standalone: true,
@@ -535,7 +535,7 @@ export class CustomRenderer implements Renderer2 {
 ```
     </TabItem>
     <TabItem label="args.directive.ts"> 
-```ts
+```angular-ts
 @Directive({
     selector: '[args]',
     standalone: true

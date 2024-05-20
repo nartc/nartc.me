@@ -1,0 +1,491 @@
+---
+title: Convert a vanilla THREE.js Angular application to Angular Three
+description: Convert Angular WebXR Art Sample, an Angular application with vanilla THREE.js, to Angular Three for a better DX to writing 3D with Angular
+slug: convert-threejs-to-angular-three
+publishedAt: 2024-05-19
+tags: ["Angular", "Three.js"]
+draft: true
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+import BlogImage from "../../components/BlogImage.astro";
+import angularWebXR from "../../assets/convert-angular-three/angularWebXR.gif";
+
+A couple of days ago, I found a cool [Angular](https://angular.dev) WebXR Art Sample application on [Google Gemini GitHub](https://github.com/google-gemini/angular-webxr-art-sample). The application was built using vanilla [THREE.js](https://threejs.org). I thought it would be a good idea to convert it to Angular Three (i.e: `angular-three`), a library that provides a custom Angular Renderer to render THREE.js entities. This way, I can leverage Angular's features and improve the developer experience when writing 3D applications with Angular.
+
+In this blog post, I will walk you through the steps I took to convert the Angular WebXR Art Sample application to Angular Three. That said, I only focus on the THREE.js conversion process. I won't cover the WebXR nor the Gemini part of the application.
+
+Additionally, I would like to refer you to the [Angular Three with AnalogJS and Astro](./angular-three-analogjs-astro) for an introduction to Angular Three
+
+## The example entry point
+
+Before diving into the conversion process, let's understand the Angular WebXR Art Sample application entry point:  `MuseumComponent`
+
+```angular-html
+@defer (prefetch on idle) {
+    <art-gallery [artworks]="artworks()" />
+} @placeholder ( minimum 5s) {
+    <art-loading></art-loading>
+} @error {
+    <p>Failed to load the gallery</p>
+}
+```
+
+We can see that there are two branches in the application: `art-gallery` and `art-loading`. The `art-gallery` branch is where the 3D models are rendered, and the `art-loading` branch is a placeholder for the spinning Angular logo.
+
+<BlogImage
+	src={angularWebXR}
+	format="gif"
+	alt="Animated gif of the Angular WebXR application"
+/>
+
+Both `art-gallery` and `art-loading` wrap a `canvas` element where the scene graph is rendered to. Both `GalleryComponent` and `LoadingComponent` extend `SceneComponent` which sets up the required building blocks for a THREE.js application:
+
+- A `Scene`
+- A `Camera`, more specifically a `PerspectiveCamera`
+- A `Renderer`, more specifically a `WebGLRenderer`
+
+```angular-ts
+export class SceneComponent {
+	/* more code */
+
+	ngAfterViewInit() {
+		const canvasEl = this.canvas().nativeElement;
+
+		/* more code */
+
+		// Scene background
+		this.scene.background = new Color("black");
+		this.scene.backgroundBlurriness = 0.3;
+
+		// Camera
+		this.camera = new PerspectiveCamera(45, w / h, 0.1, 500);
+		this.camera.position.set(0, 1.6, 0);
+		this.scene.add(this.camera);
+
+		// Renderer
+		this.renderer = new WebGLRenderer({
+			canvas: canvasEl,
+			antialias: true,
+			powerPreference: "high-performance",
+			alpha: true,
+		});
+		/* more code */
+	}
+
+	/* more code */
+}
+```
+
+In addition, the `SceneComponent` also sets up some lights and an `OrbitControls` for the camera. The `OrbitControls` allows the user to rotate the camera around the scene.
+
+<Tabs>
+    <TabItem label="SceneComponent">
+```ts
+export class SceneComponent {
+	/* more code */
+
+    ngAfterViewInit() {
+    	/* setup code */
+
+    	// add lights
+    	this.addLights();
+
+    	// add controls
+    	this.addControls();
+    }
+
+    /* more code */
+
+}
+```
+    </TabItem>
+    <TabItem label="addLights()">
+```ts
+// Camera Lights
+const cameraLight: any = this.lightsService.createSpotLight();
+cameraLight.position.set( 0, -2, 0.64 );
+this.camera.add( cameraLight );
+
+// Ambient Light
+const ambient = new HemisphereLight( 0xffffff, 0xbbbbff, 0.5 );
+this.scene.add( ambient );
+```
+    </TabItem>
+    <TabItem label="addControls()">
+```ts
+this.controls = new OrbitControls( this.camera, this.renderer.domElement );
+this.controls.listenToKeyEvents( window ); // optional
+
+// Set the controls target to the camera/user position
+this.controls.target.set( 0, 1.6, -5 );
+this.controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+this.controls.dampingFactor = 0.05;
+this.controls.enableZoom = true;
+
+this.controls.screenSpacePanning = false;
+
+this.controls.minDistance = 5;
+this.controls.maxDistance = 60;
+this.controls.maxPolarAngle = Math.PI / 2 - 0.05; // prevent camera below ground
+this.controls.minPolarAngle = Math.PI / 4;        // prevent top down view
+this.controls.update();
+```
+    </TabItem>
+</Tabs>
+
+I will not try to explain the code line-by-line here but the gist is that it is **imperative** code that sets up the base environment for the scene graph. For me personally, this code is **hard** to follow and maintain.
+
+Here is the same branched template in the Angular Three rewrite:
+
+```angular-ts
+import { ChangeDetectionStrategy, Component } from '@angular/core'
+import { GalleryScene } from './gallery-scene.component'
+import { LoadingScene } from './loading-scene.component'
+import { MuseumCanvas } from './museum-canvas.component'
+
+@Component({
+	standalone: true,
+	template: `
+		@defer (prefetch on idle) {
+			<app-museum-canvas [scene]="galleryScene" />
+		} @placeholder (minimum 5s) {
+			<app-museum-canvas [scene]="loadingScene" />
+		}
+	`,
+    /* truncated */
+	imports: [MuseumCanvas],
+})
+export default class GalleryPage {
+	galleryScene = GalleryScene
+	loadingScene = LoadingScene
+}
+```
+
+In this version, `MuseumCanvas` is the component that is responsible for setting up the required building blocks of a 3D scene graph.
+
+```angular-ts '[sceneGraph]="scene()"' "scene = input.required<Type<any>>()"
+import { ChangeDetectionStrategy, Component, input, type Type } from '@angular/core'
+import { NgtCanvas } from 'angular-three'
+import { NgtsLoader } from 'angular-three-soba/loaders'
+import * as THREE from 'three'
+
+@Component({
+	selector: 'app-museum-canvas',
+	standalone: true,
+	template: `
+		<ngt-canvas
+			[sceneGraph]="scene()"
+			[scene]="sceneOptions"
+			[camera]="$any(cameraOptions)"
+			[gl]="glOptions"
+			[shadows]="true"
+		/>
+		<ngts-loader />
+	`,
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [NgtCanvas, NgtsLoader],
+})
+export class MuseumCanvas {
+	scene = input.required<Type<any>>()
+
+	protected sceneOptions = {
+		background: new THREE.Color('black'),
+		backgroundBlurriness: 0.3,
+	}
+
+	protected cameraOptions = {
+		position: [0, 1.6, 0],
+		fov: 45,
+		near: 0.1,
+		far: 500,
+	}
+
+	protected glOptions = {
+		toneMappingExposure: 1.5,
+		// NOTE: Uncomment the following line to enable WebXR
+		// xr: {
+		//     enabled: true
+		// }
+	}
+}
+```
+
+The highlighted code shows the `MuseumCanvas` accepts a `scene` Input that is passed into the `NgtCanvas` component which will render the scene with the Custom Renderer.
+
+Alright, so that takes care of the `Renderer`, `Scene`, and `Camera`. What about the `OrbitControls` and the lights?
+Since we are using Angular Three, we can leverage the declarative approach with the Angular Template to build our _reusable_ `Lights` and `Controls` components
+
+<Tabs>
+    <TabItem label="Lights">
+```angular-ts
+import { ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, effect } from '@angular/core'
+import { extend, injectNgtStore } from 'angular-three'
+import { HemisphereLight, SpotLight } from 'three'
+
+extend({ HemisphereLight })
+
+@Component({
+	selector: 'app-lights',
+	standalone: true,
+	template: `
+		<ngt-hemisphere-light skyColor="#ffffff" groundColor="#bbbbff" [intensity]="0.5" />
+	`,
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
+})
+export class Lights {
+	protected Math = Math
+
+	private store = injectNgtStore()
+	private camera = this.store.select('camera')
+	private scene = this.store.select('scene')
+
+	constructor() {
+		effect(() => {
+			const [camera, scene] = [this.camera(), this.scene()]
+			if (!camera || !scene) return
+
+			const spotLight = new SpotLight(0xffffff, 30, 30, Math.PI / 4, 0.5)
+			spotLight.position.set(0, -2, 0.64)
+			camera.add(spotLight)
+			scene.add(camera)
+		})
+	}
+}
+```
+    </TabItem>
+    <TabItem label="Controls">
+```angular-ts
+import { ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, input } from '@angular/core'
+import { injectNgtRef } from 'angular-three'
+import { NgtsOrbitControls } from 'angular-three-soba/controls'
+import { OrbitControls } from 'three-stdlib'
+
+@Component({
+	selector: 'app-controls',
+	standalone: true,
+	template: `
+		<ngts-orbit-controls
+			[controlsRef]="controlsRef()"
+			[target]="[0, 1.6, -5]"
+			[dampingFactor]="0.05"
+			[enableZoom]="true"
+			[screenSpacePanning]="false"
+			[minDistance]="5"
+			[maxDistance]="60"
+			[maxPolarAngle]="Math.PI / 2 - 0.05"
+			[minPolarAngle]="Math.PI / 4"
+		/>
+	`,
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [NgtsOrbitControls],
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
+})
+export class Controls {
+	protected Math = Math
+	controlsRef = input(injectNgtRef<OrbitControls>())
+}
+```
+    </TabItem>
+    <TabItem label="addLights()">
+```ts
+// Camera Lights
+const cameraLight: any = this.lightsService.createSpotLight();
+cameraLight.position.set( 0, -2, 0.64 );
+this.camera.add( cameraLight );
+
+// Ambient Light
+const ambient = new HemisphereLight( 0xffffff, 0xbbbbff, 0.5 );
+this.scene.add( ambient );
+```
+    </TabItem>
+    <TabItem label="addControls()">
+```ts
+this.controls = new OrbitControls( this.camera, this.renderer.domElement );
+this.controls.listenToKeyEvents( window ); // optional
+
+// Set the controls target to the camera/user position
+this.controls.target.set( 0, 1.6, -5 );
+this.controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+this.controls.dampingFactor = 0.05;
+this.controls.enableZoom = true;
+
+this.controls.screenSpacePanning = false;
+
+this.controls.minDistance = 5;
+this.controls.maxDistance = 60;
+this.controls.maxPolarAngle = Math.PI / 2 - 0.05; // prevent camera below ground
+this.controls.minPolarAngle = Math.PI / 4;        // prevent top down view
+this.controls.update();
+```
+    </TabItem>
+</Tabs>
+
+If we count the line of code in both approaches, the _imperative_ approach seems to have less code but the _declarative_ approach is more _composable_ where we can drop `<app-lights />` and/or `<app-controls />` in any Scene graph component to have the default lighting and an `OrbitControls`.
+
+## The loading Angular Logo
+
+The loading Angular logo is a placeholder for the `art-loading` branch. In the Angular WebXR Art Sample application, the loading Angular logo is a spinning Angular logo. In the Angular Three rewrite, we use the `LoadingScene` component to render the spinning Angular logo.
+
+<Tabs>
+    <TabItem label="LoadingComponent (Angular WebXR)">
+```angular-ts 'extends SceneComponent' 'this.onLoad.bind( this )' 'this.createLight()'
+// inheritance from SceneComponent
+export class LoadingComponent extends SceneComponent {
+  /* more code */
+
+  override ngAfterViewInit (): void {
+    // sets up the building blocks
+    super.ngAfterViewInit();
+
+    // Load the logo
+    const model = this.loadersService.loadGLTF( {
+      path: '/assets/models/aLogo.glb',
+      // callback when the model is loaded
+      onLoadCB: this.onLoad.bind( this ),
+    } );
+
+    // create additional light for the loading scene
+    this.createLight();
+
+  };
+
+  createLight () {
+    /* view tab */
+  }
+
+  // Place and animate the logo when loaded
+  onLoad ( model: Object3D ) {
+    /* view tab */
+  }
+
+  animate () {
+    /* view tab */
+  }
+}
+```
+    </TabItem>
+    <TabItem label="createLight()">
+```ts
+// create a Mesh imperatively with THREE.js
+this.particleLight = new Mesh(
+  new SphereGeometry( .05, 8, 8 ),
+  new MeshBasicMaterial( { color: 0xffffff } )
+);
+// add the Mesh to the scene
+this.scene.add( this.particleLight );
+// create a PointLight imperatively with THREE.js
+const pointLight = new PointLight( 0xffffff, 30 );
+// add the PointLight to the Mesh
+this.particleLight.add( pointLight );
+// set the rotation of the PointLight
+pointLight.rotation.x = -Math.PI / 2;
+// set the position of the PointLight
+this.particleLight.position.z = -90;
+this.scene.add( this.particleLight );
+
+// add the animate function to participate in the render loop
+this.addToRender( this.animate.bind( this ) );
+```
+    </TabItem>
+    <TabItem label="onLoad()">
+```ts
+// set the position of the model
+model.position.z = -100;
+model.position.y = 13;
+model.name = 'aLogo';
+// add the model to the scene
+this.addToScene( model );
+// add the animate function to participate in the render loop
+this.addToRender( () => {
+  model.rotation.y += 0.01;
+} );
+this.controls.enabled = false;
+```
+    </TabItem>
+    <TabItem label="animate()">
+```ts
+const timer = Date.now() * 0.00025;
+this.particleLight.position.x = Math.sin( timer * 7 ) * 3;
+this.particleLight.position.y = Math.cos( timer * 5 ) * 4;
+this.particleLight.position.z = Math.cos( timer * 3 ) * 3;
+```
+    </TabItem>
+</Tabs>
+
+Once again, `LoadingComponent` inherits the setup from `SceneComponent` and adds on top of it. It is _not_ apparent how the `LoadingComponent` contributes to the Scene graph.
+
+Here's the Angular Three rewrite:
+
+```angular-ts
+import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core'
+import { extend, injectNgtRef, NgtArgs } from 'angular-three'
+import { injectNgtsGLTFLoader } from 'angular-three-soba/loaders'
+import { Mesh, PointLight, SphereGeometry, type Object3D } from 'three'
+import type { OrbitControls } from 'three-stdlib'
+import { Controls } from './controls.component'
+import { Lights } from './lights.component'
+
+extend({ Mesh, SphereGeometry, PointLight })
+
+@Component({
+	standalone: true,
+	template: `
+		<!-- addLights -->
+		<app-lights />
+
+		<!-- addControls -->
+		<app-controls [controlsRef]="controlsRef" />
+
+		<!-- angular logo model -->
+		<ngt-primitive *args="[model()]" [position]="[0, 13, -100]" (beforeRender)="onBeforeRender($any($event).object)" />
+
+		<!-- particle light -->
+		<ngt-mesh [position]="[0, 0, -90]" (beforeRender)="onParticleLightBeforeRender($any($event).object)">
+			<ngt-sphere-geometry *args="[0.05, 8, 8]" />
+			<ngt-point-light [intensity]="30" [rotation]="[-Math.PI / 2, 0, 0]" />
+		</ngt-mesh>
+	`,
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
+	imports: [NgtArgs, Lights, Controls],
+})
+export class LoadingScene {
+	protected Math = Math
+
+	protected controlsRef = injectNgtRef<OrbitControls>()
+
+	private gltf = injectNgtsGLTFLoader(() => 'models/aLogo.glb')
+	protected model = computed(() => {
+		const gltf = this.gltf()
+		if (!gltf) return null
+		this.controlsRef.nativeElement.enabled = false
+		return gltf.scene
+	})
+
+	onBeforeRender(object: Object3D) {
+		object.rotation.y += 0.01
+	}
+
+	onParticleLightBeforeRender(object: Mesh) {
+		const timer = Date.now() * 0.00025
+		object.position.x = Math.sin(timer * 7) * 3
+		object.position.y = Math.cos(timer * 5) * 4
+		object.position.z = Math.cos(timer * 3) * 3
+	}
+}
+```
+
+This version is actually so easy to follow that I will explain piece by piece:
+- The `LoadingScene` adds the `Lights` and `Controls` components to the scene by dropping `<app-lights />` and `<app-controls />` to the template.
+- For the model, we use `injectNgtsGLTFLoader()` in combination with `<ngt-primitive>` special element from Angular Three to display the model. We can apply any properties to the underlying `Object3D` from the external model by using Property Binding on the template.
+    - We can use `(beforeRender)` custom event to allow the Object to participate in the render loop.
+- For the particle light, we, once again, use the template by leverating the `<ngt-mesh>` element to create the `Mesh`.
+    - As the content child for the `Mesh`, we use `ngt-point-light` to create the `PointLight`
+    - The particle light also participates in the render loop so we use `(beforeRender)` custom event to animate the light.
+
+
+## The Gallery
+
+WIP: Please come back later. I couldn't finish the blog post in time but didn't want to wait to publish.

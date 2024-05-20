@@ -115,7 +115,7 @@ touch src/components/Experience.ts
 
 Then fill it out with the following boilerplate
 
-```ts
+```angular-ts
 import { Component } from "@angular/core";
 
 @Component({
@@ -133,15 +133,15 @@ To use this `Experience` component, open up `src/pages/index.astro`
 
 Import `Experience` component
 
-```diff
+```diff lang="angular-ts"
 import Layout from '../layouts/Layout.astro';
 import Card from '../components/Card.astro';
-+ import { Experience } from '../components/Experience';
++import { Experience } from '../components/Experience';
 ```
 
 Then render the component using the name of the component `<Experience />`
 
-```diff
+```diff lang="angular-html"
 <h1>Welcome to <span class="text-gradient">Astro</span></h1>
 <p class="instructions">
     To get started, open the directory <code>src/pages</code> in your project.<br
@@ -149,7 +149,7 @@ Then render the component using the name of the component `<Experience />`
     <strong>Code Challenge:</strong> Tweak the "Welcome to Astro" message above.
 </p>
 
-+ <Experience />
++<Experience />
 
 <ul role="list" class="link-card-grid">
     <!-- ... -->
@@ -184,7 +184,7 @@ npm install -D @types/three
 
 Let's go back to `Experience.ts` and add the following code
 
-```ts
+```angular-ts
 import { CUSTOM_ELEMENTS_SCHEMA, Component } from "@angular/core";
 import { NgtCanvas } from "angular-three";
 
@@ -213,21 +213,21 @@ Since Three.js is a Canvas-base library (i.e: [WebGL](https://developer.mozilla.
 to enable client-side JavaScript for our `Experience` component. Astro allows us to do so by using `client:load` directive on
 our component. So, let's go back to `src/pages/index.astro` and make the following change
 
-```diff
-- <Experience />
-+ <Experience client:load />
+```diff lang="astro"
+-<Experience />
++<Experience client:load />
 ```
 
 Additionally, we also need to update `astro.config.mjs` with the following change:
 
-```diff
+```diff lang="js"
 export default defineConfig({
   integrations: [analogjsangular()],
-+ vite: {
-+   ssr: {
-+     noExternal: ["angular-three", "three", "ngx-resize"],
-+   },
-+ },
++  vite: {
++    ssr: {
++      noExternal: ["angular-three", "three", "ngx-resize"],
++    },
++  },
 });
 ```
 
@@ -243,7 +243,7 @@ how to render `<div>` into an `HTMLDivElement` on the DOM.
 
 To do so, we'll use `extend()` API from `angular-three` to expand the internal **catalogue** of Angular Three
 
-```diff
+```diff lang="angular-ts"
 - import { NgtCanvas } from "angular-three";
 + import { NgtCanvas, extend } from "angular-three";
 + import { Mesh, MeshBasicMaterial, BoxGeometry } from "three";
@@ -253,7 +253,7 @@ To do so, we'll use `extend()` API from `angular-three` to expand the internal *
 
 Here, we are _teaching_ Angular Three how to render a `THREE.Mesh`, a `THREE.MeshBasicMaterial`, and a `THREE.BoxGeometry`
 
-```diff
+```diff lang="angular-ts"
 @Component({
   standalone: true,
   template: `
@@ -284,7 +284,7 @@ Our canvas is a little too small. This is because of two reasons:
 `NgtCanvas` component is designed to take on the parent's dimensions. Hence, we can control our canvas' sizes by wrapping `<Experience />` with
 a container with a specified `height`
 
-```diff
+```diff lang="angular-html"
 + <div style="height: 600px">
     <Experience client:load />
 + </div>
@@ -301,7 +301,7 @@ The canvas will take up `600px` and our pink box will be more visible.
 
 To animate our box, we can use `(beforeRender)` output on `<ngt-mesh>`
 
-```diff
+```diff lang="angular-ts"
 - import { NgtCanvas, extend } from "angular-three";
 + import { NgtCanvas, extend, type NgtBeforeRenderEvent } from "angular-three";
 
@@ -338,7 +338,7 @@ to **NOT** update states in this function.
 At the moment, our "box" looks bland. In fact, we can't even tell if it's a box. The reason is we're using `MeshBasicMaterial`
 for our box and `MeshBasicMaterial` does not reflect lights. Let's switch to `MeshStandardMaterial`, a material that can reflect lights.
 
-```diff
+```diff lang="angular-ts"
 - import { BoxGeometry, Mesh, MeshBasicMaterial } from "three";
 + import { BoxGeometry, Mesh, MeshStandardMaterial } from "three";
 
@@ -348,7 +348,7 @@ for our box and `MeshBasicMaterial` does not reflect lights. Let's switch to `Me
 
 Then we can update our template
 
-```diff
+```diff lang="angular-html"
 <ngt-mesh (beforeRender)="onBeforeRender($event)">
     <ngt-box-geometry />
 -    <ngt-mesh-basic-material color="hotpink" />
@@ -362,7 +362,7 @@ But wait, our box is now pitch black.
 
 We haven't added any lights yet. Imagine a dark room, there is no light that our box can reflect on. Let's add some lights
 
-```diff
+```diff lang="angular-ts"
 import {
 + AmbientLight,
   BoxGeometry,
@@ -382,12 +382,12 @@ extend({
 
 Next, let's update our template to render those lights
 
-```diff
+```diff lang="angular-ts"
 @Component({
   standalone: true,
   template: `
-+   <ngt-ambient-light [intensity]="Math.PI" />
-+   <ngt-directional-light [intensity]="Math.PI" />
++    <ngt-ambient-light [intensity]="Math.PI" />
++    <ngt-directional-light [intensity]="Math.PI" />
 
     <ngt-mesh (beforeRender)="onBeforeRender($event)">
       <ngt-box-geometry />
@@ -397,7 +397,7 @@ Next, let's update our template to render those lights
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 class Scene {
-+ Math = Math;
++  Math = Math;
 
   onBeforeRender({ object, state }: NgtBeforeRenderEvent<THREE.Mesh>) {
     object.rotation.x += state.delta;
@@ -421,7 +421,7 @@ our camera is **static**. However, we will be able to control our camera with th
 
 Let's teach Angular Three how to render `OrbitControls`
 
-```diff
+```diff lang="angular-ts"
 + import { OrbitControls } from "three-stdlib";
 
 extend({
@@ -430,19 +430,19 @@ extend({
   BoxGeometry,
   AmbientLight,
   DirectionalLight,
-+ OrbitControls,
++  OrbitControls,
 });
 ```
 
 Next, let's adjust our `Scene` component to render `OrbitControls`
 
-```diff
+```diff lang="angular-ts"
 import {
   NgtCanvas,
   extend,
   type NgtBeforeRenderEvent,
-+ injectNgtStore,
-+ NgtArgs,
++  injectNgtStore,
++  NgtArgs,
 } from "angular-three";
 
 @Component({
@@ -456,17 +456,17 @@ import {
       <ngt-mesh-standard-material color="hotpink" />
     </ngt-mesh>
 
-+   <ngt-orbit-controls *args="[camera(), domElement()]" />
++    <ngt-orbit-controls *args="[camera(), domElement()]" />
   `,
-+ imports: [NgtArgs],
++  imports: [NgtArgs],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 class Scene {
   Math = Math;
 
-+ private store = injectNgtStore();
-+ camera = this.store.select("camera");
-+ domElement = this.store.select("gl", "domElement");
++  private store = injectNgtStore();
++  camera = this.store.select("camera");
++  domElement = this.store.select("gl", "domElement");
 
   onBeforeRender({ object, state }: NgtBeforeRenderEvent<THREE.Mesh>) {
     object.rotation.x += state.delta;
