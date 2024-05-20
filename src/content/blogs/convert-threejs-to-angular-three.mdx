@@ -9,6 +9,10 @@ tags: ["Angular", "Three.js"]
 import { Tabs, TabItem } from "@astrojs/starlight/components";
 import BlogImage from "../../components/BlogImage.astro";
 import angularWebXR from "../../assets/convert-angular-three/angularWebXR.gif";
+import floorWalls from "../../assets/convert-angular-three/floorWalls.png";
+import framesCommentedOut from "../../assets/convert-angular-three/framesCommentedOut.png";
+import lightsCommentedOut from "../../assets/convert-angular-three/lightsCommentedOut.png";
+import noLights from "../../assets/convert-angular-three/noLights.png";
 
 A couple of days ago, I found a cool [Angular](https://angular.dev) WebXR Art Sample application on [Google Gemini GitHub](https://github.com/google-gemini/angular-webxr-art-sample). The application was built using vanilla [THREE.js](https://threejs.org). I thought it would be a good idea to convert it to Angular Three (i.e: `angular-three`), a library that provides a custom Angular Renderer to render THREE.js entities. This way, I can leverage Angular's features and improve the developer experience when writing 3D applications with Angular.
 
@@ -480,11 +484,440 @@ This version is actually so easy to follow that I will explain piece by piece:
 - The `LoadingScene` adds the `Lights` and `Controls` components to the scene by dropping `<app-lights />` and `<app-controls />` to the template.
 - For the model, we use `injectNgtsGLTFLoader()` in combination with `<ngt-primitive>` special element from Angular Three to display the model. We can apply any properties to the underlying `Object3D` from the external model by using Property Binding on the template.
     - We can use `(beforeRender)` custom event to allow the Object to participate in the render loop.
-- For the particle light, we, once again, use the template by leverating the `<ngt-mesh>` element to create the `Mesh`.
+- For the particle light, we, once again, use the template by leveraging the `<ngt-mesh>` element to create the `Mesh`.
     - As the content child for the `Mesh`, we use `ngt-point-light` to create the `PointLight`
     - The particle light also participates in the render loop so we use `(beforeRender)` custom event to animate the light.
 
 
 ## The Gallery
 
-WIP: Please come back later. I couldn't finish the blog post in time but didn't want to wait to publish.
+The `GalleryComponent` is similar to `LoadingComponent` in a sense that it also extends `SceneComponent`.
+
+```angular-ts 'extends SceneComponent' 'this.createFrames()' 'this.createEnv()'
+export class GalleryComponent extends SceneComponent {
+  /* more code */
+
+  override ngAfterViewInit (): void {
+
+    super.ngAfterViewInit();
+
+    // Focus frame
+    this.createFrames();
+
+    // Environment
+    this.createEnv();
+
+  };
+
+  createFrames () {
+    /* will discuss later */
+  }
+
+  createEnv () {
+    /* will discuss later */
+  }
+
+  /* more code */
+};
+```
+
+The difference is `GalleryComponent` creates the **Frames** for the artworks and creates its own environment on top of the base environment (i.e: lights)
+
+<Tabs>
+    <TabItem label="createEnv()">
+We'll be looking at the `createEnv()` method in the `GalleryComponent` that sets up the environment for the gallery. More specifically,
+we'll look at `addCornerLights()` and the two callbacks `onModelLoaded()` and `onLoadWallsLoaded()`.
+
+```angular-ts 'this.addCornerLights();' 'this.onModelLoaded( model );' 'this.onLoadWallsLoaded( model );'
+export class GalleryComponent extends SceneComponent {
+  /* more code */
+  createEnv () {
+
+    // Lights
+    this.addCornerLights();
+
+    // Add Models
+    // Model for Floor
+    const model = this.loadersService.loadGLTF( {
+      path: "assets/models/floorModel.glb",
+      onLoadCB: ( model: Object3D<Object3DEventMap> ) => {
+        this.onModelLoaded( model );
+      },
+    } );
+
+    // Model for Walls
+    const modelWalls = this.loadersService.loadGLTF( {
+      path: "assets/models/galleryInnerWalls.glb",
+      onLoadCB: ( model: Object3D<Object3DEventMap> ) => {
+        this.onLoadWallsLoaded( model );
+      },
+    } );
+
+  }
+
+  /* more code */
+}
+```
+    </TabItem>
+    <TabItem label="addCornerLights()">
+`GalleryComponent` adds 3 `PointLight` to the scene to create a corner light effect.
+
+```angular-ts 'PointLight' 'pointLight.clone()'
+// Corner lights in each inner walls
+const pointLight = new PointLight( 0xffffff, Math.PI, 13, 1 );
+pointLight.position.y = 3.2;
+pointLight.position.z = -10;
+
+const pointLight1 = pointLight.clone();
+pointLight1.position.set( 10, 3.2, 7.6 );
+
+const pointLight2 = pointLight.clone();
+pointLight2.position.set( -10, 3.2, 7.6 );
+this.scene.add( pointLight, pointLight1, pointLight2 );
+```
+    </TabItem>
+    <TabItem label="onModelLoaded() for Floor">
+Once we load the model, we'll create a `MeshPhysicalMaterial` for every `Object3D` in the model itself. However, if the `Object3D` is the floor, we'll create a `MeshStandardMaterial` for it with additional textures.
+
+```angular-ts 'createMeshPhysicalMaterial()' 'createFloorMaterial()'
+let meshesCount = 0;
+let material: Material = this.materialsService.createMeshPhysicalMaterial();
+
+model.position.z = -0;
+model.scale.set( 3, 3, 3 );
+model.traverse( ( obj: any ) => {
+
+  if ( obj.isMesh ) {
+    meshesCount += 1;
+    if ( obj.name == 'Floor' ) {
+      material = this.materialsService.createFloorMaterial();
+    }
+
+    obj.material = material;
+
+    obj.castShadow = true;
+    obj.receiveShadow = true;
+    obj.castShadow = true;
+    obj.receiveShadow = true;
+
+    if ( obj.material.map ) { obj.material.map.anisotropy = 16; }
+  }
+
+} );
+
+this.addToScene( model );
+```
+    </TabItem>
+    <TabItem label="createFloorMaterial() for Floor">
+We load 3 different files for 3 different textures to apply to the Floor's material.
+
+```angular-ts 'hardwood_diffuse' 'hardwood_bump' 'hardwood_roughness' 'floorMat.map = map' 'floorMat.bumpMap = map' 'floorMat.roughnessMap = map'
+const floorMat = new MeshStandardMaterial( {
+  roughness: 0.8,
+  color: 0xffffff,
+  metalness: 0.2,
+  bumpScale: 0.0005
+} );
+
+// Diffuse
+this.loadersService.textureLoader.load( 'assets/textures/hardwood_diffuse.jpg', ( map ) => {
+  map.wrapS = RepeatWrapping;
+  map.wrapT = RepeatWrapping;
+  map.anisotropy = 16;
+  map.repeat.set( 10, 24 );
+  map.colorSpace = SRGBColorSpace;
+  floorMat.map = map;
+  floorMat.needsUpdate = true;
+},
+  undefined,
+  // onError callback
+  function ( err ) {
+    console.error( 'Bump texture failed to load.' );
+
+  }
+);
+
+this.loadersService.textureLoader.load( 'assets/textures/hardwood_bump.jpg', function ( map ) {
+
+  map.wrapS = RepeatWrapping;
+  map.wrapT = RepeatWrapping;
+  map.anisotropy = 4;
+  map.repeat.set( 10, 24 );
+  floorMat.bumpMap = map;
+  floorMat.needsUpdate = true;
+
+},
+  undefined,
+  // onError callback
+  function ( err ) {
+    console.error( 'Bump texture failed to load.' );
+
+  } );
+
+this.loadersService.textureLoader.load( 'assets/textures/hardwood_roughness.jpg', function ( map ) {
+
+  map.wrapS = RepeatWrapping;
+  map.wrapT = RepeatWrapping;
+  map.anisotropy = 4;
+  map.repeat.set( 10, 24 );
+  floorMat.roughnessMap = map;
+  floorMat.needsUpdate = true;
+
+},
+  undefined,
+  // onError callback
+  function ( err ) {
+    console.error( 'Bump texture failed to load.' );
+
+  }
+);
+
+return floorMat;
+```
+    </TabItem>
+    <TabItem label="onLoadWallsLoaded() for Walls">
+For the walls, we just set the position and scale of the model.
+
+```angular-ts
+model.position.z = -0;
+model.scale.set( 3, 3, 3 );
+
+this.addToScene( model );
+```
+    </TabItem>
+</Tabs>
+
+As you can see here, the _imperativeness_ is an ongoing theme for vanilla THREE.js application development. The `GalleryComponent` is no exception. The `createEnv()` method is a mix of setting up the environment, loading models, and setting up materials for the models.
+
+Here's the Angular Three rewrite:
+
+```angular-ts {'1': 13} {'2': 18-20}
+import { ChangeDetectionStrategy, Component } from '@angular/core'
+import { ARTWORKS } from '../artworks'
+import { Controls } from './controls.component'
+import { Floor } from './floor.component'
+import { Frames } from './frames.component'
+import { GalleryLights } from './gallery-lights.component'
+import { Walls } from './walls.component'
+
+@Component({
+	standalone: true,
+	template: `
+		<!-- addControls -->
+		<app-controls />
+
+		<app-frames [artworks]="artworks" />
+
+		<!-- createEnv -->
+		<app-gallery-lights />
+		<app-floor />
+		<app-walls />
+		<!-- end createEnv -->
+	`,
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	host: { class: 'experience' },
+	imports: [Controls, Frames, Floor, Walls, GalleryLights],
+})
+export class GalleryScene {
+	protected artworks = ARTWORKS
+}
+```
+
+First off, we compose `<app-controls />` to set up the `OrbitControls`. We'll skip `<app-frames />` for now and focus on the `createEnv` part. We drop `<app-gallery-lights />`, `<app-floor />`, and `<app-walls />` to the template to set up the additional lights, the floor, and the walls. It is already a lot clearer to see what the `GalleryScene` is doing.
+
+<Tabs>
+    <TabItem label="GalleryLights">
+Composition is the key here once again. We compose `<app-lights />` (1) to set up the default lights then add 3 `PointLight` to the scene to create a corner light effect. Since we operate on the template, we can leverage control flow like `@for` to create the corner lights based on the predefined corner `positions` (2).
+
+```angular-ts {'1': 13} {'2': 16-18}
+import { ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core'
+import { extend } from 'angular-three'
+import { PointLight } from 'three'
+import { Lights } from './lights.component'
+
+extend({ PointLight })
+
+@Component({
+	selector: 'app-gallery-lights',
+	standalone: true,
+	template: `
+		<!-- addLights -->
+		<app-lights />
+
+		<!-- addCornerLights -->
+		@for (position of lightPositions; track $index) {
+			<ngt-point-light [intensity]="Math.PI" [distance]="13" [decay]="1" [position]="position" />
+		}
+	`,
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
+	imports: [Lights],
+})
+export class GalleryLights {
+	protected Math = Math
+	protected lightPositions = [
+		[0, 3.2, -10],
+		[10, 3.2, 7.6],
+		[-10, 3.2, 7.6],
+	]
+}
+```
+    </TabItem>
+    <TabItem label="Floor">
+For the floor, we use `ngt-primitive` in combination with `injectNgtsGLTFLoader()`. Interestingly, we also use `injectNgtsTextureLoader()` to load a _dictionary_ of textures for the floor. We then apply the textures to the `MeshStandardMaterial` for the floor.
+
+```angular-ts {'1': 10, 17} {'2': 18-22} {'3': 72-74}
+import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core'
+import { checkUpdate, NgtArgs } from 'angular-three'
+import { injectNgtsGLTFLoader, injectNgtsTextureLoader } from 'angular-three-soba/loaders'
+import { MeshPhysicalMaterial, MeshStandardMaterial, RepeatWrapping, SRGBColorSpace, type Mesh } from 'three'
+
+@Component({
+	selector: 'app-floor',
+	standalone: true,
+	template: `
+		<ngt-primitive *args="[model()]" />
+	`,
+	imports: [NgtArgs],
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class Floor {
+	private gltf = injectNgtsGLTFLoader(() => 'models/floorModel.glb')
+	private textures = injectNgtsTextureLoader(() => ({
+		diffuse: 'textures/hardwood_diffuse.jpg',
+		bump: 'textures/hardwood_bump.jpg',
+		roughness: 'textures/hardwood_roughness.jpg',
+	}))
+
+	protected model = computed(() => {
+		const [gltf, textures] = [this.gltf(), this.textures()]
+		if (!gltf || !textures) return null
+		const { diffuse, roughness, bump } = textures
+		const scene = gltf.scene
+
+		let material: MeshStandardMaterial | MeshPhysicalMaterial = new MeshPhysicalMaterial({
+			// clearcoat: 0,
+			clearcoatRoughness: 0.1,
+			// metalness: 0,
+			roughness: 0.9,
+			color: 0x54001b, // Teal: 0x004a54,
+			// normalScale: new Vector2(0.15, 0.15)
+		})
+
+		scene.position.z = -0
+		scene.scale.setScalar(3)
+
+		scene.traverse((obj) => {
+			if ((obj as Mesh).isMesh) {
+				if (obj.name === 'Floor') {
+					// Diffuse
+					diffuse.wrapS = RepeatWrapping
+					diffuse.wrapT = RepeatWrapping
+					diffuse.anisotropy = 16
+					diffuse.repeat.set(10, 24)
+					diffuse.colorSpace = SRGBColorSpace
+					checkUpdate(diffuse)
+
+					// bump
+					bump.wrapS = RepeatWrapping
+					bump.wrapT = RepeatWrapping
+					bump.anisotropy = 4
+					bump.repeat.set(10, 24)
+					checkUpdate(bump)
+
+					// roughness
+					roughness.wrapS = RepeatWrapping
+					roughness.wrapT = RepeatWrapping
+					roughness.anisotropy = 4
+					roughness.repeat.set(10, 24)
+					checkUpdate(roughness)
+
+					material = new MeshStandardMaterial({
+						roughness: 0.8,
+						color: 0xffffff,
+						metalness: 0.2,
+						bumpScale: 0.0005,
+						map: diffuse,
+						bumpMap: bump,
+						roughnessMap: roughness,
+					})
+				}
+
+				;(obj as Mesh).material = material
+				obj.castShadow = true
+				obj.receiveShadow = true
+
+				if (((obj as Mesh).material as MeshPhysicalMaterial).map) {
+					;((obj as Mesh).material as MeshPhysicalMaterial).map!.anisotropy = 16
+				}
+			}
+		})
+
+		return scene
+	})
+}
+```
+    </TabItem>
+    <TabItem label="Walls">
+The walls is straightforward with `ngt-primitive` and `injectNgtsGLTFLoader()`
+
+```angular-ts {'1': 9} {'2': 16}
+import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core'
+import { NgtArgs } from 'angular-three'
+import { injectNgtsGLTFLoader } from 'angular-three-soba/loaders'
+
+@Component({
+	selector: 'app-walls',
+	standalone: true,
+	template: `
+		<ngt-primitive *args="[model()]" />
+	`,
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [NgtArgs],
+})
+export class Walls {
+	private gltf = injectNgtsGLTFLoader(() => 'models/galleryInnerWalls.glb')
+	protected model = computed(() => {
+		const gltf = this.gltf()
+		if (!gltf) return null
+
+		const scene = gltf.scene
+
+		scene.scale.setScalar(3)
+
+		return scene
+	})
+}
+```
+    </TabItem>
+</Tabs>
+
+In fact, since `GallaryScene` is a composition of `Controls`, `Frames`, `GalleryLights`, `Floor`, and `Walls`, I can _comment out_ `<app-frames />` and show you what it looks like with just the `Controls`, `GalleryLights`, `Floor`, and `Walls`
+
+<BlogImage
+    src={framesCommentedOut}
+    alt="Screenshot of the Angular Three rewrite with just the Controls, GalleryLights, Floor, and Walls"
+/>
+
+<BlogImage
+    src={floorWalls}
+    alt="Screenshot of the Angular Three rewrite with just the Controls, GalleryLights, Floor, and Walls"
+/>
+
+Well, this is also achievable by commenting out the `this.createFrames()` in the vanilla THREE.js counterpart. But what if you want to see the difference in the lighting setup with and without the base `<app-lights />`? You can do so very easily by commenting out `<app-lights />` in `<app-gallery-lights />`
+
+<BlogImage
+    src={lightsCommentedOut}
+    alt="Screenshot of the Angular Three rewrite with just the Controls, GalleryLights (no base Lights), Floor, and Walls"
+/>
+
+<BlogImage
+    src={noLights}
+    alt="Screenshot of the Angular Three rewrite with just the Controls, GalleryLights (no base Lights), Floor, and Walls"
+/>
+
+## The Frames
+
+WIP
