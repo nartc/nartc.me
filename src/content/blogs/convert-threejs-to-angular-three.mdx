@@ -13,6 +13,10 @@ import floorWalls from "../../assets/convert-angular-three/floorWalls.png";
 import framesCommentedOut from "../../assets/convert-angular-three/framesCommentedOut.png";
 import lightsCommentedOut from "../../assets/convert-angular-three/lightsCommentedOut.png";
 import noLights from "../../assets/convert-angular-three/noLights.png";
+import fullFrame from "../../assets/convert-angular-three/fullFrame.png";
+import imageOnly from "../../assets/convert-angular-three/imageOnly.png";
+import frameOnly from "../../assets/convert-angular-three/frameOnly.png";
+import frameButtonsOnly from "../../assets/convert-angular-three/frameButtonsOnly.png";
 
 A couple of days ago, I found a cool [Angular](https://angular.dev) WebXR Art Sample application on [Google Gemini GitHub](https://github.com/google-gemini/angular-webxr-art-sample). The application was built using vanilla [THREE.js](https://threejs.org). I thought it would be a good idea to convert it to Angular Three (i.e: `angular-three`), a library that provides a custom Angular Renderer to render THREE.js entities. This way, I can leverage Angular's features and improve the developer experience when writing 3D applications with Angular.
 
@@ -920,4 +924,678 @@ Well, this is also achievable by commenting out the `this.createFrames()` in the
 
 ## The Frames
 
-WIP
+This part consists of 5 image frames based on the `artworks()` data.
+
+The Frames are created by the `createFrames()` method in the vanilla THREE.js version. The frames is a `Group` which contains all 5 individual image frames (1). Then, we iterate over the `artworks` array to create a frame for each artwork (2). We create the frame by calling `createFrame()` and then place the frame by calling `placeFrame()` (3). Finally, we add the frame to the `frames` group (4).
+
+```angular-ts {'1': 1} {'2': 8-12} {'3': 14} {'4': 17}
+frames: Group<Object3DEventMap> = new Group();
+
+createFrames ( artworks: Artwork[], cb?: Function ) {
+    this.frames.name = 'Frames Group';
+    // Angle between frames
+    this.angle = ( Math.PI * 2 ) / artworks.length || 5;
+
+    const frames = artworks.map( ( artwork, i ) => {
+      const f = this.placeFrame( this.createFrame( artwork ), i );
+      f.name = `Frame ${i}`;
+      return f;
+    } );
+
+    this.frames.add( ...frames );
+
+    this.frames.position.set( 0, 1.6, 0 );
+    this.focusFrame( 0 );
+
+    return this.frames;
+}
+```
+
+Let's look at the rewrite Angular Three version
+
+First, we use the `ngt-group` to create the `Group` that contains all 5 image frames. Our `Frames` component accepts an Input `artworks` which is an array of `Artwork` objects. We use the `@for` control-flow to iterate over the `artworks` array to create a `Frame` for each artwork. We also create a `CylinderGeometry` that all 5 `Frame` will share.
+
+```angular-ts {'1': 5,12} {'2': 19} {'3': 6-11} {'4': 21}
+@Component({
+	selector: 'app-frames',
+	standalone: true,
+	template: `
+		<ngt-group name="Frames Group" [position]="[0, 1.6, 0]">
+			@for (artwork of artworks(); track artwork.id) {
+				<app-frame
+					[artwork]="artwork"
+					[geometry]="geometry"
+				/>
+			}
+		</ngt-group>
+	`,
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
+	imports: [Frame],
+})
+export class Frames {
+	artworks = input.required<Artwork[]>()
+
+	protected geometry = new CylinderGeometry(1, 0.85, 0.1, 64, 5)
+
+	private angle = computed(() => (Math.PI * 2) / this.artworks().length || 5)
+}
+```
+
+There are also `placeFrame()` and `focusFrame()` which we touch on in later sections.
+
+## The frame
+
+Each image frame consists of three parts:
+
+- The Frame itself which is a `Mesh`
+- The image which is a `Mesh` with a `Texture`
+- The buttons which are `Mesh` with `Text` on them (from `three-mesh-ui`)
+
+<BlogImage
+    src={fullFrame}
+    alt="Screenshot a full frame"
+/>
+
+Surround all parts is a `Group`
+
+<Tabs>
+    <TabItem label="Vanilla THREE.js">
+```angular-ts {'1': 2}
+createFrame(artwork: Artwork) {
+    const frame = new Group();
+}
+```
+    </TabItem>
+    <TabItem label="Angular Three">
+```angular-html
+<ngt-group #frameGroup></ngt-group>
+```
+    </TabItem>
+</Tabs>
+
+### The frame `Mesh`
+
+
+<BlogImage
+    src={frameOnly}
+    alt="Screenshot the frame only"
+/>
+
+From the image, you might be able to tell that this is the first part of our `Frame` component which is the base/frame itself and it is using the `CylinderGeometry` that we create in the parent `Frames` component.
+
+Let's take a look at the code for this part in both versions
+
+<Tabs>
+    <TabItem label="Vanilla THREE.js">
+The code is removed in part that is not relevant to the frame creation. The Frame is straightforward to create. We create a `Mesh` with the `CylinderGeometry` and `MeshPhongMaterial` and then add it to the `frame` `Group`. The geometry is also rotated by 90 degree on the X axis **before** it is used on the `Mesh`.
+```angular-ts
+createFrame ( artwork: Artwork ) {
+    this.frameGeometry.rotateX( Math.PI / 2 );
+
+    // Create the frame
+    const frameMaterial = this.phongMaterial.clone();
+    frameMaterial.color.set( "rgb(165, 187, 206)" );
+    frameMaterial.needsUpdate = true;
+    const frameMesh = new Mesh( this.frameGeometry, frameMaterial );
+
+    frameMesh.name = `${artwork.title} frame mesh` || 'frame';
+
+    frame.add( frameMesh );
+
+    return frame;
+}
+```
+    </TabItem>
+    <TabItem label="Angular Three">
+As straightforward as the vanilla THREE.js version, we use the `ngt-mesh` element to create the `Mesh` with the passed in `CylinderGeometry` and a `ngt-mesh-phong-material`.
+```angular-html {'Creating the Frame mesh as a child to the Frame group': 2-10} {'------>': 7}
+<ngt-group #frameGroup>
+
+    <ngt-mesh
+        #frameMesh
+        [name]="artwork().title + ' frame mesh'"
+        [geometry]="geometry"
+        (afterAttach)="onAfterAttach($any(frameMesh))"
+    >
+        <ngt-mesh-phong-material color="rgb(165, 187, 206)" [needsUpdate]="true" />
+    </ngt-mesh>
+</ngt-group>
+```
+
+Notice the `(afterAttach)` event that is used to call the `onAfterAttach()` method on the frame mesh. This is where we rotate the geometry. In the Angular Three version, we have to use the `queueMicrotask()` to ensure that the `frameMesh` is attached to the `frameGroup` before we rotate the geometry.
+
+```angular-ts
+onAfterAttach(frameMesh: Mesh) {
+    queueMicrotask(() => {
+        frameMesh.geometry.rotateX(Math.PI / 2)
+    })
+}
+```
+
+> `afterAttach()` is a special event in Angular Three that is triggered when the element is _attached_ to its parent element. This is useful when we need to perform an action on the element after it is attached to the scene graph.
+    </TabItem>
+</Tabs>
+
+### The image `Mesh`
+
+<BlogImage
+    src={imageOnly}
+    alt="Screenshot the image only"
+/>
+
+> If I haven't _bragged_ already, then these images are captured by commenting out parts of the `Frame` component template. Thanks to Angular Three.
+
+<Tabs>
+    <TabItem label="Vanilla THREE.js">
+The code is removed in part that is not relevant to the image creation. The image is a `Mesh` with a `BoxGeometry` and a `MeshPhongMaterial` with a `Texture` applied to it. The image is then added to the `frame` `Group`. The image is also accompanied by a `SpotLight` that targets the image.
+```angular-ts {'Creating the BoxGeometry': 2-3} {'Loading the texture for the Material': 5-12} {'Creating the Mesh': 14-17} {'Creating the SpotLight': 19-22} {'Adding the Mesh and the Light to the Frame group': 24-25}
+createFrame ( artwork: Artwork ) {
+
+    const canvasGeometry = new BoxGeometry( 1, 1, 0.12 );
+
+
+    // Create the canvas material with the texture
+    const texture = this.loadersService.loadTexture( artwork.url );
+    texture.colorSpace = SRGBColorSpace;
+    texture.mapping = UVMapping;
+    const canvasMaterial = this.phongMaterial.clone();
+    canvasMaterial.name = 'Canvas Material';
+    canvasMaterial.map = texture;
+
+
+    // Create the canvas mesh
+    const canvasMesh = new Mesh( canvasGeometry, canvasMaterial );
+    canvasMesh.name = 'Canvas';
+
+
+    const light = this.lightsService.createSpotLight();
+    light.target = canvasMesh;
+    light.position.y = 2;
+
+
+    frame.add( canvasMesh, light );
+
+    return frame;
+}
+```
+    </TabItem>
+    <TabItem label="Angular Three">
+```angular-ts {'Creating the Mesh': 6-7} {'Creating the BoxGeometry': 8-9} {'Creating the Material': 10-11} {'Load the texture using injectNgtsGLTFLoader': 35-42} {'Creating the SpotLight': 14-22}
+@Component({
+	template: `
+		<ngt-group #frameGroup>
+            <!--- truncated frame mesh -->
+
+
+			<ngt-mesh #canvasMesh name="Canvas">
+
+				<ngt-box-geometry *args="[1, 1, 0.12]" />
+
+				<ngt-mesh-phong-material name="Canvas material" [map]="artworkTexture()" />
+			</ngt-mesh>
+
+
+			<ngt-spot-light
+				[intensity]="30"
+				[distance]="30"
+				[angle]="Math.PI / 4"
+				[penumbra]="0.5"
+				[target]="canvasMesh"
+				[position]="[0, 2, 0]"
+			/>
+		</ngt-group>
+	`,
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
+	imports: [NgtArgs, FrameButtons],
+})
+export class Frame {
+	protected Math = Math
+
+	geometry = input.required<CylinderGeometry>()
+	artwork = input.required<Artwork>()
+
+
+	protected artworkTexture = injectNgtsTextureLoader(() => this.artwork().url, {
+		onLoad: ([texture]) => {
+			texture.colorSpace = SRGBColorSpace
+			texture.mapping = UVMapping
+			checkUpdate(texture)
+		},
+	})
+}
+```
+Notice how we can use **Template Variable** `#canvasMesh` to reference the `Mesh` element and assign it to the `[target]` input on the `SpotLight`? That is the power of Angular Three declarative approach. Everything that is familiar to Angular developers is available by using Angular Three.
+    </TabItem>
+</Tabs>
+
+### The buttons
+
+<BlogImage
+    src={frameButtonsOnly}
+    alt="Screenshot of the frame buttons only"
+/>
+
+<Tabs>
+    <TabItem label="Vanilla THREE.js">
+A lot is going on here to create the UI Buttons (Previous, Info, Next). These are created via `three-mesh-ui` library. The main key of this part is that these elements in the Canvas have to be interactive and have event listeners attached to them. This is tricky in THREE.js because the elements **do not** have DOM events as they're elements in a Canvas. This is where the Interaction Manager comes in but it is not developer friendly to add interactions to 3D elements.
+```angular-ts {'Creating the buttons with createUI()': 2-3} {'Creating the group of buttons with createInteractiveButtons()': 12-13} {'Creating the container Block': 26-27} {'Looping through the buttons to create each button': 43-44} {'Creating the button with createButton()': 45-46} {'Each button is a Block': 54-55} {'with a Text inside': 58-59} {'with event listener via Interaction Manager': 79-81}
+createFrame ( artwork: Artwork ) {
+
+    const buttons = this.createUI( artwork );
+
+
+    frame.add( buttons );
+
+    return frame;
+}
+
+createUI ( artwork: Artwork ) {
+
+    const buttonsPanel = this.UIService.createInteractiveButtons( { buttons: this.buttons, id: artwork.id } );
+    buttonsPanel.position.x = 0;
+    buttonsPanel.position.y = -0.7;
+    buttonsPanel.position.z = -0.2;
+
+    buttonsPanel.rotateY( Math.PI );
+    buttonsPanel.rotateX( -0.55 );
+
+    return buttonsPanel;
+}
+
+createInteractiveButtons ( options: any ) {
+    const ops = Object.assign( {}, this.defaultOptions, options );
+
+    const container = new ThreeMeshUI.Block(
+      {
+        justifyContent: 'center',
+        contentDirection: 'row-reverse',
+        fontFamily: this.FontJSON,
+        fontTexture: this.FontImage,
+        fontSize: 0.1,
+        padding: 0.02,
+        borderRadius: 0.11,
+        height: 0.2,
+        width: options.buttons.length / 2,
+      }
+    );
+    container.name = ops.name;
+    this.container = container;
+
+
+    ops.buttons.forEach( ( o: any, i: number ) => {
+
+      const button = this.createButton( ops.id, o );
+      this.container.add( button );
+    } );
+
+    return container;
+};
+
+createButton ( id: number, ops?: any ) {
+
+    const btn = new ThreeMeshUI.Block( this.buttonOptions );
+    btn.name = `Frame ${id} ${ops.name}`;
+
+
+    btn.add( new ThreeMeshUI.Text( {
+      content: ops.text,
+      name: `${ops.name} Text`,
+    } ) );
+
+
+    // @ts-ignore
+    btn.setupState( {
+      state: 'selected',
+      attributes: this.selectedAttributes,
+    } );
+
+    // @ts-ignore
+    btn.setupState( this.idleStateAttributes );
+    // @ts-ignore
+    btn.setupState( this.hoveredStateAttributes );
+
+
+    btn.position.set( -0.5, 0, 0 );
+
+
+    this.interactions.addToInteractions( btn );
+    this.interactions.addToColliders( { mesh: btn, name: ops.name, cb: () => { ops.onClick( id ); } } );
+    // @ts-ignore
+    btn.addEventListener( 'click', () => { ops.onClick( id ); } );
+
+    return btn;
+}
+```
+    </TabItem>
+    <TabItem label="Angular Three">
+Things look a little manageable here in the Angular Three version. First, we use `extend()` to make `Block` available as `ngt-mesh-block` and `Text` available as `ngt-mesh-text`. Then, everything just happens on the template, even the Event Listener part via a familiar Event Binding syntax `(click)`. Since `FrameButtons` is a component, it can have Input as well as Outputs so we attach the `next`, `previous`, and `playInfo` outputs to the `(click)` event on the buttons accordingly.
+```angular-ts {'Extending Angular Three element catalogue with extend() which makes ngt-mesh-block and ngt-mesh-text available': 2-3} {'Creating a Block with ngt-mesh-block': 9-10} {'Loop over the predefined buttons list': 11-12} {'Creating a Block for each button': 13-14} {'Adding the (click) event to button.onClick()': 18-19} {'Creating a Text inside the Block': 21-22} {'This is equivalent to this.addToRender(this.ui.update) but it wasn't shown in the Vanilla THREE.js code': 73-76}
+import { Block, Text, update } from 'three-mesh-ui'
+
+extend({ MeshBlock: Block, MeshText: Text })
+
+@Component({
+	selector: 'app-frame-buttons',
+	standalone: true,
+	template: `
+
+		<ngt-mesh-block *args="[buttonsPanelArgs]" [position]="[0, -0.7, -0.2]" [rotation]="[0.55, Math.PI, 0]">
+
+			@for (button of buttons; track $index) {
+
+				<ngt-mesh-block
+					*args="[buttonOptions]"
+					[name]="'Frame ' + artwork().id + ' ' + button.text + ' Button'"
+					[position]="button.position"
+
+					(click)="$any($event).object.name === 'MeshUI-Frame' && button.onClick()"
+				>
+
+					<ngt-mesh-text
+						*args="[{ content: button.text, name: 'Frame ' + artwork().id + ' ' + button.text + ' Button Text' }]"
+					/>
+				</ngt-mesh-block>
+			}
+		</ngt-mesh-block>
+	`,
+	imports: [NgtArgs],
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class FrameButtons {
+	protected Math = Math
+
+	artwork = input.required<Artwork>()
+	next = output()
+	previous = output()
+	playInfo = output()
+
+	protected buttonOptions = DEFAULT_BUTTON_OPTIONS
+	protected buttons = [
+		{
+			onClick: this.next.emit.bind(this.next),
+			text: 'Next',
+			position: [-0.75, 0, 0.0],
+		},
+		{
+			onClick: this.playInfo.emit.bind(this.playInfo),
+			text: 'Info',
+			position: [-0.8, 0.8, -0.1],
+		},
+		{
+			onClick: this.previous.emit.bind(this.previous),
+			text: 'Previous',
+			position: [0.75, 0, 0],
+		},
+	]
+	protected buttonsPanelArgs = {
+		name: 'Button Panel Container',
+		justifyContent: 'center',
+		contentDirection: 'row-reverse',
+		fontFamily: 'fonts/Roboto-msdf.json',
+		fontTexture: 'fonts/Roboto-msdf.png',
+		fontSize: 0.1,
+		padding: 0.02,
+		borderRadius: 0.11,
+		height: 0.2,
+		width: this.buttons.length / 2,
+	}
+
+	constructor() {
+
+		injectBeforeRender(() => {
+			update()
+		})
+	}
+}
+```
+
+> You might be wondering what is `(click)="$any($event).object.name === 'MeshUI-Frame' && button.onClick()"`? Angular Three provides its own event system out of the box. `Block` from `three-mesh-ui` creates an implicit `Frame` element as well as a `Block` element so Angular Three's event system captures two events when we click on the `Frame` element: one event for `Block`, and one event for `Frame`. We use `$any($event).object.name === 'MeshUI-Frame'` as a workaround to ensure that the event is only triggered once.
+
+    </TabItem>
+</Tabs>
+
+### Other details
+
+We skip a couple of methods like `placeFrame()`, `focusFrame()`, and `moveFrame()`. These methods are used to position the frame relative to the Frames group and to focus on a particular frame at a time. The way we implement this in Angular Three is different than in Vanilla THREE.js, not in the logic themselves but where to put them. In Angular Three, we leverage `afterAttach` event as a way to ensure the elements are ready before we perform any action on them.
+
+<Tabs>
+    <TabItem label="FramesComponent">
+```angular-ts {'1 onFramesGroupAttached() to focus the first frame': 7-8, 43-44} {'2 onFrameAttached() to position the frame': 14-15,31-32}
+@Component({
+	selector: 'app-frames',
+	standalone: true,
+	template: `
+		<ngt-group
+		    name="Frames Group" [position]="[0, 1.6, 0]"
+
+		    (afterAttach)="onFramesGroupAttached($any($event).node)"
+        >
+			@for (artwork of artworks(); track artwork.id) {
+				<app-frame
+					[artwork]="artwork"
+					[geometry]="geometry"
+
+					(frameAttached)="onFrameAttached($event, $index)"
+				/>
+			}
+		</ngt-group>
+	`,
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
+	imports: [NgtArgs, Frame],
+})
+export class Frames {
+	artworks = input.required<Artwork[]>()
+
+	protected geometry = new CylinderGeometry(1, 0.85, 0.1, 64, 5)
+
+	private frames = signal<Group>(null!)
+
+
+	onFrameAttached(frame: Group, index: number) {
+		frame.rotateY(Math.PI)
+		const alpha = index * this.angle()
+		const x = Math.sin(alpha) * 7 // 0 - 1
+		const z = -Math.cos(alpha) * 7 // 0 - 0
+		frame.position.set(x, 0, z)
+		frame.rotation.y = alpha
+		frame.userData['originalPosition'] = frame.position.clone()
+		checkUpdate(frame)
+	}
+
+
+	onFramesGroupAttached(frames: Group) {
+		this.frames.set(frames)
+		// NOTE: we want to run this after all frames are attached
+		queueMicrotask(() => {
+			const f = frames.children[0]
+			this.focusFrame(f)
+		})
+	}
+```
+    </TabItem>
+    <TabItem label="FrameComponent">
+```angular-ts {'frameAttached output to emit (afterAttach) back to parent Frames component': 7-8, 23-24}
+@Component({
+	selector: 'app-frame',
+	standalone: true,
+	template: `
+		<ngt-group
+			#frameGroup
+
+			(afterAttach)="frameAttached.emit($any(frameGroup))"
+		>
+            <!-- truncated -->
+		</ngt-group>
+	`,
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
+	imports: [NgtArgs, FrameButtons],
+})
+export class Frame {
+	protected Math = Math
+
+	geometry = input.required<CylinderGeometry>()
+	artwork = input.required<Artwork>()
+
+
+	frameAttached = output<Group>()
+
+    /* truncated */
+}
+```
+    </TabItem>
+</Tabs>
+
+### The interactions
+
+Last step is to convert the Next, Previous, and Play Info events over. This is done by emitting the `next`, `previous`, and `playInfo` outputs from the `FrameButtons` component -> `Frame` component then handle the events in `Frames` component.
+
+```angular-ts {'Listen to the events': 11-14} {'onNext() to go to the next Artwork index': 33-34} {'onPrevious() to go to the previous Artwork index': 44-45} {'onPlayInfo() to play the info with Web Speech API': 55-56}
+@Component({
+	selector: 'app-frames',
+	standalone: true,
+	template: `
+		<ngt-group name="Frames Group" [position]="[0, 1.6, 0]" (afterAttach)="onFramesGroupAttached($any($event).node)">
+			@for (artwork of artworks(); track artwork.id) {
+				<app-frame
+					[artwork]="artwork"
+					[geometry]="geometry"
+					(frameAttached)="onFrameAttached($event, $index)"
+
+					(next)="onNext($event)"
+					(previous)="onPrevious($event)"
+					(playInfo)="onPlayInfo($event)"
+				/>
+			}
+		</ngt-group>
+	`,
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
+	imports: [NgtArgs, Frame],
+})
+export class Frames {
+	artworks = input.required<Artwork[]>()
+
+	protected geometry = new CylinderGeometry(1, 0.85, 0.1, 64, 5)
+
+	private speechClient = inject(SpeechClient)
+
+	private frames = signal<Group>(null!)
+	private angle = computed(() => (Math.PI * 2) / this.artworks().length || 5)
+
+
+	onNext(currentId: number) {
+		const currentFrame = this.frames().children[currentId]
+		this.resetFramePosition(currentFrame)
+
+		// Rotate to Next frame
+		const i = currentId < 5 - 1 ? currentId + 1 : 0
+		this.rotateFrames(72)
+		this.focusFrame(this.frames().children[i])
+	}
+
+
+	onPrevious(currentId: number) {
+		const currentFrame = this.frames().children[currentId]
+		this.resetFramePosition(currentFrame)
+
+		// Rotate to Previous
+		const i = currentId === 0 ? 5 - 1 : currentId - 1
+		this.rotateFrames(-72)
+		this.focusFrame(this.frames().children[i])
+	}
+
+
+	onPlayInfo(artwork: Artwork) {
+		const text = artwork.description || artwork.title
+		if (text) {
+			void this.speechClient.speak(text)
+		}
+	}
+
+	onFrameAttached(frame: Group, index: number) {
+		frame.rotateY(Math.PI)
+		const alpha = index * this.angle()
+		const x = Math.sin(alpha) * 7 // 0 - 1
+		const z = -Math.cos(alpha) * 7 // 0 - 0
+		frame.position.set(x, 0, z)
+		frame.rotation.y = alpha
+		frame.userData['originalPosition'] = frame.position.clone()
+		checkUpdate(frame)
+	}
+
+	onFramesGroupAttached(frames: Group) {
+		this.frames.set(frames)
+		// NOTE: we want to run this after all frames are attached
+		queueMicrotask(() => {
+			const f = frames.children[0]
+			this.focusFrame(f)
+		})
+	}
+
+	private focusFrame(frame: Object3D) {
+		const x = (frame.position.x / 7) * 4
+		const z = (frame.position.z / 7) * 4
+		const p = new Vector3(x, frame.position.y, z)
+		this.moveFrame(frame, p)
+	}
+
+	private moveFrame(frame: Object3D, position: Vector3) {
+		animate({
+			from: frame.position,
+			to: position,
+			duration: 2500,
+			ease: easeInOut,
+			onUpdate: (latest) => {
+				frame.position.x = latest.x
+				frame.position.y = latest.y
+				frame.position.z = latest.z
+			},
+			onComplete: () => {
+				checkUpdate(frame)
+			},
+		})
+	}
+
+	private resetFramePosition(frame: Object3D) {
+		const position = frame.userData['originalPosition']
+		this.moveFrame(frame, position)
+	}
+
+	private rotateFrames(angle: number = 72) {
+		// angle between frames and the current group rotation
+		const y = MathUtils.degToRad(angle) + this.frames().rotation.y
+		animate({
+			from: this.frames().rotation.y,
+			to: y,
+			duration: 1000,
+			ease: easeInOut,
+			onUpdate: (latest) => (this.frames().rotation.y = latest),
+		})
+	}
+}
+```
+
+And voila, the application is converted fully to Angular Three. Here's the GIF of the running application again.
+
+<BlogImage
+	src={angularWebXR}
+	format="gif"
+	alt="Animated gif of the Angular WebXR application"
+/>
+
+Github:
+- [Vanilla THREE.js](https://github.com/google-gemini/angular-webxr-art-sample)
+- [Angular Three](https://github.com/nartc/ngt-web-art-sample)
+
+## Conclusion
+
+In this blog post, we have successfully converted a Vanilla THREE.js application to Angular Three. We have seen how Angular Three can help us to write cleaner and more maintainable code by leveraging Angular's template syntax and TypeScript. We have also seen how Angular Three can help us to manage the complexity of a 3D application by providing a declarative way to create and manage 3D elements.
+
+The process is super fun for me personally and I hope you enjoy reading it as much as I enjoy writing it. If you have any questions or feedback, feel free to reach out to me on [Twitter](https://twitter.com/nartc1410).
+
+Have fun coding!

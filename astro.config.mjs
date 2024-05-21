@@ -13,7 +13,7 @@ export default defineConfig({
 			title: "Nartc - Personal Blog",
 		}),
 		expressiveCode({
-			themes: ['dark-plus', 'light-plus'],
+			themes: ["dark-plus", "light-plus"],
 			plugins: [pluginLineNumbers()],
 		}),
 		mdx(),
