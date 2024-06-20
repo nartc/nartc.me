@@ -29,5 +29,6 @@
 		"astro-expressive-code": "^0.35.3",
 		"sharp": "^0.33.2",
 		"typescript": "^5.4.3"
-	}
+	},
+	"packageManager": "pnpm@9.3.0"
 }
