@@ -74,7 +74,7 @@ In this article, we will be looking at two [R3F](https://docs.pmnd.rs/react-thre
 
 #### What do `Selection` and `Select` do?
 
-In [@react-three/postprocessing](https://github.com/pmndrs/react-postprocessing), there are a few Postprocessing effects that are applied to only selected 3D objects. `Selection` and `Select` are used to track the selected objects so the effects can apply to them. Here's a quick eample with `Outline`
+In [@react-three/postprocessing](https://github.com/pmndrs/react-postprocessing), there are a few Postprocessing effects that are applied to only selected 3D objects. `Selection` and `Select` are used to track the selected objects so the effects can apply to them. Here's a quick example with `Outline`
 
 ```tsx {'Wrap the entire scene with Selection': 6-7} {'Wrap the objects subjected to Selection with Select': 9-10} {'Control the selected state with useState': 11-14} {'Outline automatically knows about the selected context': 22-23}
 export function App() {
@@ -193,11 +193,11 @@ export class NgtSelection {}
 
 ##### 1. The template
 
-Usually, the first thing that I usually _port_ is the template.
+Usually, the first thing that I _port_ is the template.
 
 <CardGrid>
     <Card title="React">
-    ```tsx
+    ```tsx {3-5}
     export function Selection() {
         return (
             <selectionContext.Provider value={value}>
@@ -208,7 +208,7 @@ Usually, the first thing that I usually _port_ is the template.
     ```
     </Card>
     <Card title="Angular">
-    ```angular-ts
+    ```angular-ts {4}
     @Component({
         /* ... */
         template: `
@@ -398,7 +398,7 @@ Let's compare how we use `NgtSelection` in Angular to how we use `Selection` in 
     </Card>
 </CardGrid>
 
-Pretty cool right? Now, this is even cooler. In Angular, we can also use `NgtSelection` as a Host Directive`.
+Pretty cool right? Now, this is even cooler. In Angular, we can also use `NgtSelection` as a Host Directive.
 
 ```diff lang=angular-ts
 @Component({
@@ -561,7 +561,7 @@ This is similar to `NgtSelection`, we'll use Signal Input here to replicate the 
 
 `NgtSelect` is an Attribute Directive, meaning that we can `inject` the host element with `inject(ElementRef)`. This is almost equivalent to `useRef` in `Select` in terms of functionality and purpose.
 
-> To be perfectly clear, Im not saying that `inject(ElementRef)` is the same as `useRef` in React.
+> To be perfectly clear, I'm not saying that `inject(ElementRef)` is the same as `useRef` in React.
 
 <CardGrid>
     <Card title="React">
