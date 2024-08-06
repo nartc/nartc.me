@@ -1,0 +1,808 @@
+---
+title: Port a simple React Component to Angular
+description: Let's port a simple React component to Angular with me
+slug: port-react-component
+publishedAt: 2024-08-06
+tags: ["Angular", "React"]
+---
+
+import { Tabs, TabItem, CardGrid, Card } from "@astrojs/starlight/components";
+
+With Props Spreading, Dependency Injection via [Context API](https://reactjs.org/docs/context.html), and [TypeScript](https://www.typescriptlang.org) via TSX, [React](https://reactjs.org/) does an excellent job at providing a powerful composition model for building UIs.
+
+On the other hand, [Angular](https://angular.io/) with [Directive](https://angular.dev/guide/directives/attribute-directives), built-in [Dependency Injection](https://angular.dev/guide/di), and recently [Host Directive](https://angular.dev/guide/directives/directive-composition-api) also makes a great choice for building UIs with composition in mind.
+
+> Regardless of your preferences, this article is meant to show the differences and similarities between different APIs of React and Angular. Knowing these will allow us to easily interop between the two technologies; making our knowledge richer, and the web ecosystem a better place overall.
+
+## Selection APIs
+
+In this article, we will be looking at two [R3F](https://docs.pmnd.rs/react-three-fiber/getting-started/introduction) components that are used together: `Selection` and `Select`.
+
+<Tabs>
+    <TabItem label="Selection">
+    ```tsx
+    export type Api = {
+      selected: THREE.Object3D[]
+      select: React.Dispatch<React.SetStateAction<THREE.Object3D[]>>
+      enabled: boolean
+    }
+
+    export const selectionContext = createContext<Api | null>(null)
+
+    export function Selection({ children, enabled = true }: { enabled?: boolean; children: React.ReactNode }) {
+      const [selected, select] = useState<THREE.Object3D[]>([])
+      const value = useMemo(() => ({ selected, select, enabled }), [selected, select, enabled])
+      return <selectionContext.Provider value={value}>{children}</selectionContext.Provider>
+    }
+    ```
+    </TabItem>
+    <TabItem label="Select">
+    ```tsx
+    export type SelectApi = JSX.IntrinsicElements['group'] & {
+      enabled?: boolean
+    }
+
+    export function Select({ enabled = false, children, ...props }: SelectApi) {
+      const group = useRef<THREE.Group>(null!)
+      const api = useContext(selectionContext)
+      useEffect(() => {
+        if (api && enabled) {
+          let changed = false
+          const current: THREE.Object3D<THREE.Event>[] = []
+          group.current.traverse((o) => {
+            o.type === 'Mesh' && current.push(o)
+            if (api.selected.indexOf(o) === -1) changed = true
+          })
+          if (changed) {
+            api.select((state) => [...state, ...current])
+            return () => {
+              api.select((state) => state.filter((selected) => !current.includes(selected)))
+            }
+          }
+        }
+      }, [enabled, children, api])
+      return (
+        <group ref={group} {...props}>
+          {children}
+        </group>
+      )
+    }
+    ```
+    </TabItem>
+
+</Tabs>
+
+#### What do `Selection` and `Select` do?
+
+In [@react-three/postprocessing](https://github.com/pmndrs/react-postprocessing), there are a few Postprocessing effects that are applied to only selected 3D objects. `Selection` and `Select` are used to track the selected objects so the effects can apply to them. Here's a quick eample with `Outline`
+
+```tsx {'Wrap the entire scene with Selection': 6-7} {'Wrap the objects subjected to Selection with Select': 9-10} {'Control the selected state with useState': 11-14} {'Outline automatically knows about the selected context': 22-23}
+export function App() {
+	const [hovered, hover] = useState(false);
+
+	return (
+		<Canvas>
+
+			<Selection>
+
+
+				<Select
+
+					enabled={hovered}
+					onPointerOver={() => hover(true)}
+					onPointerOut={() => hover(false)}
+				>
+					<mesh>
+						<boxGeometry />
+					</mesh>
+				</Select>
+
+				<EffectComposer>
+
+					<Outline />
+				</EffectComposer>
+			</Selection>
+		</Canvas>
+	);
+}
+```
+
+This is straightforward and follows the composition model of React pretty well. We want to enable **selection**, wrap the scene with `Selection`. We want to enable the objects to be selectable, wrap them with `Select`.
+
+Though at this point, I want to point out a couple of things about `Select` specifically. `Select` is a component that renders a `THREE.Group` (via `<group>`) so it can be used to select multiple objects at once.
+
+```tsx
+export function App() {
+	const [hovered, hover] = useState(false);
+
+	return (
+		<Select
+			enabled={hovered}
+			onPointerOver={() => hover(true)}
+			onPointerOut={() => hover(false)}
+		>
+			<mesh>
+				<boxGeometry />
+			</mesh>
+
+			<mesh>
+				<coneGeometry />
+			</mesh>
+		</Select>
+	);
+}
+```
+
+However, if we want to select a single object, we still have to wrap it with `Select` like the original example. This feels a little awkward to me, but it's the composition model of React.
+
+One good thing about `Select` and React composition model is that it allows for `Select` to accept any properties that are valid for a `THREE.Group` via Props Spreading. This makes the `Select` API itself very flexible and a lot less code to write. Main example of this is the `onPointerOver` and `onPointerOut` handlers.
+
+Well, that is enough about React for now. Let's move on to Angular. We'll port both `Selection` and `Select` to Angular for similar capabilities. During the process, we'll dissect the React code to see how it works and what's the best way to port it to Angular.
+
+## Porting `Selection` to Angular
+
+Let's bring back `Selection` and dissect each part of the component.
+
+```tsx {'Selection uses Context API to provide the selected objects to its children': 6-7} {'Selection state is stored with a simple useState': 16-17 } {'Context value (API) is memoized': 19-20} {'Context.Provider has to be part of the Component tree to provide its value to children': 26-27}
+export type Api = {
+	selected: THREE.Object3D[];
+	select: React.Dispatch<React.SetStateAction<THREE.Object3D[]>>;
+	enabled: boolean;
+};
+
+export const selectionContext = createContext<Api | null>(null);
+
+export function Selection({
+	children,
+	enabled = true,
+}: {
+	enabled?: boolean;
+	children: React.ReactNode;
+}) {
+
+	const [selected, select] = useState<THREE.Object3D[]>([]);
+
+
+	const value = useMemo(
+		() => ({ selected, select, enabled }),
+		[selected, select, enabled],
+	);
+
+	return (
+
+		<selectionContext.Provider value={value}>
+			{children}
+		</selectionContext.Provider>
+	);
+}
+```
+
+With this in mind, we can _kind of_ guess how `Selection` API is consumed. Children of `Selection` will access the API via `useContext(selectionContext)` and that is exactly how `Outline` consumes the Selection API.
+
+We'll start by stubbing out `NgtSelection` in Angular
+
+```angular-ts
+@Component({
+    selector: 'ngt-selection',
+    standalone: true,
+    template: ``,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class NgtSelection {}
+```
+
+##### 1. The template
+
+Usually, the first thing that I usually _port_ is the template.
+
+<CardGrid>
+    <Card title="React">
+    ```tsx
+    export function Selection() {
+        return (
+            <selectionContext.Provider value={value}>
+                {children}
+            </selectionContext.Provider>
+        )
+    }
+    ```
+    </Card>
+    <Card title="Angular">
+    ```angular-ts
+    @Component({
+        /* ... */
+        template: `
+            <ng-content />
+        `,
+        /* ... */
+    })
+    export class NgtSelection {}
+    ```
+    </Card>
+</CardGrid>
+
+In this case, `Selection` renders its children because it needs to provide the `selectionContext`. For Angular, we can use `ng-content`. However, that is _actually_ redundant because we already have the `NgtSelection` class itself as the context. So, we can change `NgtSelection` to a Directive instead.
+
+<CardGrid>
+    <Card title="React">
+    ```tsx
+    export function Selection() {
+        return (
+            <selectionContext.Provider value={value}>
+                {children}
+            </selectionContext.Provider>
+        )
+    }
+    ```
+    </Card>
+    <Card title="Angular">
+    ```angular-ts
+    @Directive({
+        selector: '[ngtSelection]',
+        standalone: true,
+    })
+    export class NgtSelection {}
+    ```
+    </Card>
+</CardGrid>
+
+##### 2. The value
+
+Next, we need to have a way to keep track of the selected objects.
+
+<CardGrid>
+    <Card title="React">
+    ```tsx {'Use state to keep track of selected state': 2-3} {'useMemo is recommended to provide value for Context to expose': 5-6}
+    export function Selection() {
+
+        const [selected, select] = useState<THREE.Object3D[]>([]);
+
+
+        const value = useMemo(
+            () => ({ selected, select, enabled }),
+            [selected, select, enabled],
+        );
+
+        return (
+            /* ... */
+        )
+    }
+    ```
+    </Card>
+    <Card title="Angular">
+    ```angular-ts {'Signal is a great option here': 5-6} {'Exposing readonly Signal': 8-9} {'Exposing update method': 11-12}
+    @Directive({
+        /* ... */
+    })
+    export class NgtSelection {
+
+        private source = signal<THREE.Object3D[]>([]);
+
+
+        selected = this.source.asReadonly();
+
+
+        select = this.source.update.bind(this.source);
+    }
+    ```
+    </Card>
+
+</CardGrid>
+
+##### 3. The `enabled` input
+
+Finally, we need to expose the `enabled` input from `NgtSelection` to replicate the `enabled` prop in `Selection`
+
+<CardGrid>
+    <Card title="React">
+    ```tsx {'enabled is exposed along with the API': 3-4}
+    export function Selection({ enabled }) {
+        /* ... */
+
+        const value = useMemo(
+            () => ({ selected, select, enabled }),
+            [selected, select, enabled],
+        );
+
+        return (
+            /* ... */
+        )
+    }
+    ```
+    </Card>
+    <Card title="Angular">
+    ```angular-ts {'Signal Input here, with alias and transform to make it easier for consumers': 5-6}
+    @Directive({
+        /* ... */
+    })
+    export class NgtSelection {
+
+        enabled = input(
+            true,
+            { transform: booleanAttribute, alias: 'ngtSelection'}
+        );
+
+        /* ... */
+    }
+    ```
+    </Card>
+
+</CardGrid>
+
+And that is it for `NgtSelection`. We don't need anything from Angular to replicate the Context API because Angular has Dependency Injection built-in. The consumers can simply `inject(NgtSelection)` and use the **public** APIs. Here's the complete code for both `Selection` and `NgtSelection`
+
+<CardGrid>
+    <Card title="React">
+    ```tsx
+    export type Api = {
+      selected: THREE.Object3D[]
+      select: React.Dispatch<React.SetStateAction<THREE.Object3D[]>>
+      enabled: boolean
+    }
+
+    export const selectionContext = createContext<Api | null>(null)
+
+    export function Selection({ children, enabled = true }: { enabled?: boolean; children: React.ReactNode }) {
+      const [selected, select] = useState<THREE.Object3D[]>([])
+      const value = useMemo(() => ({ selected, select, enabled }), [selected, select, enabled])
+      return <selectionContext.Provider value={value}>{children}</selectionContext.Provider>
+    }
+    ```
+    </Card>
+    <Card title="Angular">
+    ```angular-ts
+    @Directive({
+        selector: '[ngtSelection]',
+        standalone: true,
+    })
+    export class NgtSelection {
+        enabled = input(true, { transform: booleanAttribute, alias: 'ngtSelection' });
+        private source = signal<THREE.Object3D[]>([]);
+        selected = this.source.asReadonly();
+        select = this.source.update.bind(this.source);
+    }
+    ```
+    </Card>
+
+</CardGrid>
+
+##### 4. Usage
+
+Let's compare how we use `NgtSelection` in Angular to how we use `Selection` in React
+
+<CardGrid>
+    <Card title="React">
+    ```tsx
+    export function Scene() {
+        return (
+            <Selection>
+                {/* children that can consume Selection */}
+            </Selection>
+        )
+    }
+    ```
+    </Card>
+    <Card title="Angular">
+    ```angular-ts
+    @Component({
+        standalone: true,
+        template: `
+            <ng-container ngtSelection>
+                <!-- children that can consume Selection -->
+            </ng-container>
+        `,
+        imports: [NgtSelection],
+    })
+    export class SceneGraph {}
+    ```
+    </Card>
+</CardGrid>
+
+Pretty cool right? Now, this is even cooler. In Angular, we can also use `NgtSelection` as a Host Directive`.
+
+```diff lang=angular-ts
+@Component({
+    standalone: true,
+    template: `
+-        <ng-container ngtSelection>
+            <!-- children that can consume Selection -->
+-        </ng-container>
+    `,
+-    imports: [NgtSelection],
++    hostDirectives: [NgtSelection],
+})
+export class SceneGraph {}
+```
+
+## Porting `Select` to Angular
+
+Let's look at `Select` next and dissect its code.
+
+```tsx {'Props spreading to pass-through properties to THREE.Group': 5-6} {'useRef to store the THREE.Group reference for side-effects': 8-9} {'useContext to consume selectionContext': 11-12} {'useEffect to run side-effect and update Selection API based on Group children.': 14-15} {'group is rendered with children': 21-22}
+export type SelectApi = {
+	enabled?: boolean;
+} & JSX.IntrinsicElements["group"];
+
+
+export function Select({ enabled = false, children, ...props }: SelectApi) {
+
+
+	const group = useRef<THREE.Group>(null!);
+
+
+	const api = useContext(selectionContext);
+
+
+	useEffect(() => {
+		/* Effect body is irrelevant here. */
+		/* All we need to know is that `group.current` and the Selection API are used here */
+	}, [enabled, children, api]);
+
+	return (
+
+		<group ref={group} {...props}>
+			{children}
+		</group>
+	);
+}
+```
+
+As mentioned above, `Select` has both pros and cons. It is flexible and can accept any properties that are valid for a `THREE.Group` via Props Spreading. However, it always renders a `THREE.Group` even when we only want to select a single object.
+
+Similarly, let's stub out `NgtSelect` in Angular
+
+```angular-ts
+@Component({
+    selector: 'ngt-select',
+    standalone: true,
+    template: ``,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class NgtSelect {}
+```
+
+We'll follow the same approach as before; starting out with the template
+
+##### 1. The template
+
+<CardGrid>
+    <Card title="React">
+    ```tsx {4-6}
+    export function Select() {
+        /* ... */
+        return (
+            <group ref={group} {...props}>
+                {children}
+            </group>
+        )
+    }
+    ```
+    </Card>
+    <Card title="Angular">
+    ```angular-ts {4-6}
+    @Component({
+        /* ... */
+        template: `
+            <ngt-group #group>
+                <ng-content />
+            </ngt-group>
+        `,
+    })
+    export class NgtSelect {}
+    ```
+    </Card>
+</CardGrid>
+
+Well, this is straightforward. But this is also where things get a little bit interesting. We need to make sure that `NgtSelect` can pass-through any properties that are valid for `<ngt-group>` from outside. In Angular, this is **not** possible with the Input model. Not to mention, we also need to pass-through the event handlers that are valid for `<ngt-group>` as well; Inputs and Outputs are separate concerns in Angular, unlike **props** in React.
+
+So, how do we proceed? We have 2 options:
+
+- a. Replicate all the inputs and outputs that `ngt-group` potentially accepts
+- b. Turn `NgtSelect` into an **Attribute Directive** instead of a **Component**
+
+Option (a) is straightforward to understand but it is also a lot of code to write (and maintain). Option (b) seems complicated and sub-optimal at first. However, it allows us to _delegate_ the responsibility of attaching `NgtSelect` on the consumers' selected elements (i.e: the `<ngt-group>`), and in turns allows `NgtSelect` to **NOT** have to worry about passing through anything. So, we'll go with Option (b).
+
+Now compared to `Select` in React, Angular version will make the consumers do a little bit more work by using `NgtSelect` with `ngt-group` instead of making that decision for them by rendering `<ngt-group>`
+
+> This is actually a good thing which we will discuss in a bit.
+
+```diff lang=angular-ts
+-@Component({
++@Directive({
+-    selector: 'ngt-select',
+-    template: ``,
++    selector: '[ngtSelect]',
+    standalone: true,
+})
+export class NgtSelect {}
+```
+
+There is one more thing that we can do for `NgtSelect`. Since `NgtSelect` is now an Attribute Directive, we can control **when** it is instantiated by using the `selector` property. In this case, we only want to instantiate `NgtSelect` when the host element is `<ngt-group>` so we'll adjust the `selector` to be `ngt-group[ngtSelect]`
+
+Additionally, we can also make a decision that `NgtSelect` can be used on `<ngt-mesh>` as well, allowing the consumers to select single objects. Once again, we'll adjust the `selector` to be `ngt-group[ngtSelect], ngt-mesh[ngtSelect]`
+
+```diff lang=angular-ts
+@Directive({
+-    selector: '[ngtSelect]',
++    selector: 'ngt-group[ngtSelect], ngt-mesh[ngtSelect]',
+    standalone: true,
+})
+export class NgtSelect {}
+```
+
+##### 2. The `enabled` input
+
+This is similar to `NgtSelection`, we'll use Signal Input here to replicate the `enabled` prop in `Select`
+
+<CardGrid>
+    <Card title="React">
+    ```tsx 'enabled = false'
+    export function Select({ enabled = false }) {
+
+        return (
+            /* ... */
+        )
+    }
+    ```
+    </Card>
+    <Card title="Angular">
+    ```angular-ts {5}
+    @Directive({
+        /* ... */
+    })
+    export class NgtSelect {
+        enabled = input(false, { transform: booleanAttribute, alias: 'ngtSelect' });
+    }
+    ```
+    </Card>
+</CardGrid>
+
+##### 3. The `group` reference
+
+`NgtSelect` is an Attribute Directive, meaning that we can `inject` the host element with `inject(ElementRef)`. This is almost equivalent to `useRef` in `Select` in terms of functionality and purpose.
+
+> To be perfectly clear, Im not saying that `inject(ElementRef)` is the same as `useRef` in React.
+
+<CardGrid>
+    <Card title="React">
+    ```tsx {'useRef to store the THREE.Group reference for side-effects': 2-3} {'Use the ref on the JSX element': 6-7}
+    export function Select() {
+
+        const group = useRef<THREE.Group>(null!);
+
+        return (
+
+            <group ref={group}>
+                /* ... */
+            </group>
+        )
+    }
+    ```
+    </Card>
+    <Card title="Angular">
+    ```angular-ts {'Group | Mesh because the selector of NgtSelect allows for such to happen': 7-8}
+    @Directive({
+        /* ... */
+    })
+    export class NgtSelect {
+
+        constructor() {
+
+            const elementRef = inject<ElementRef<Group | Mesh>>(ElementRef);
+        }
+    }
+    ```
+    </Card>
+</CardGrid>
+
+##### 4. Consuming Selection API
+
+`NgtSelect` is going to be supposed to be used within `NgtSelection` so natually, we'll have access to `NgtSelection` via `inject(NgtSelection)` in `NgtSelect`
+
+<CardGrid>
+    <Card title="React">
+    ```tsx {'useContext to consume selectionContext': 2-3}
+    export function Select() {
+
+        const api = useContext(selectionContext);
+
+        return (
+            /* ... */
+        )
+    }
+    ```
+    </Card>
+    <Card title="Angular">
+    ```angular-ts {'Use inject to inject the NgtSelection': 6-7}
+    @Directive({
+        /* ... */
+    })
+    export class NgtSelect {
+        constructor() {
+
+            const selection = inject(NgtSelection);
+        }
+    }
+    ```
+    </Card>
+</CardGrid>
+
+##### 5. The effect
+
+I mentioned earlier that the effect body is irrelevant here. So we'll just point out which API from Angular that we can utilize to execute the same side-effects as `Select` in React.
+
+<CardGrid>
+    <Card title="React">
+    ```tsx {'useEffect with deps array to run side-effect': 2-3}
+    export function Select() {
+
+        useEffect(() => {
+            /* operate on THREE.Group reference and Selection context here */
+        }, [/* ... */]);
+
+        return (
+            /* ... */
+        )
+    }
+    ```
+    </Card>
+    <Card title="Angular">
+    ```angular-ts {'Use autoEffect (this is relevant only to Angular Three)': 6-7} {'Start our effect in afterNextRender to ensure CD has invoked at least once': 9-10} {'Utilize autoEffect to house the effect body': 12-13}
+    @Directive({
+        /* ... */
+    })
+    export class NgtSelect {
+        constructor() {
+
+            const autoEffect = injectAutoEffect();
+
+
+            afterNextRender(() => {
+
+
+                autoEffect(() => {
+                    /* operate on host element and NgtSelection here */
+                    /* since our host element is either a Group or Mesh, we can have conditional code paths here */
+                })
+            })
+        }
+    }
+    ```
+    </Card>
+</CardGrid>
+
+And that is it for `NgtSelect`. Let's see both versions side-by-side
+
+
+<CardGrid>
+    <Card title="React">
+    ```tsx
+    export type SelectApi = {
+        enabled?: boolean;
+    } & JSX.IntrinsicElements["group"];
+
+    export function Select({ enabled = false, children, ...props }: SelectApi) {
+        const group = useRef<THREE.Group>(null!);
+        const api = useContext(selectionContext);
+
+        useEffect(() => {
+            /* Effect body is irrelevant here. */
+            /* All we need to know is that `group.current` and the Selection API are used here */
+        }, [enabled, children, api]);
+
+        return (
+            <group ref={group} {...props}>
+                {children}
+            </group>
+        );
+    }
+    ```
+    </Card>
+    <Card title="Angular">
+    ```angular-ts
+    @Directive({
+        selector: 'ngt-group[ngtSelect], ngt-mesh[ngtSelect]',
+        standalone: true,
+    })
+    export class NgtSelect {
+        enabled = input(false, { transform: booleanAttribute, alias: 'ngtSelect' });
+
+        constructor() {
+            const elementRef = inject<ElementRef<Group | Mesh>>(ElementRef);
+            const selection = inject(NgtSelection);
+            const autoEffect = injectAutoEffect();
+
+            afterNextRender(() => {
+                autoEffect(() => {
+                    /* operate on host element and NgtSelection here */
+                    /* since our host element is either a Group or Mesh, we can have conditional code paths here */
+                })
+            })
+        }
+    }
+    ```
+    </Card>
+</CardGrid>
+
+Now that we have `NgtSelection` and `NgtSelect` ported, let's compare their usages between React and Angular
+
+<CardGrid>
+    <Card title="React">
+    ```tsx {'1': 2} {'2': 5} {'3': 6}
+    function Scene() {
+        const [hovered, hover] = useState(false);
+
+        return (
+            <Selection>
+                <Select
+                    enabled={hovered}
+                    onPointerOver={() => hover(true)}
+                    onPointerOut={() => hover(false)}
+                >
+                    <mesh>
+                        <boxGeometry />
+                    </mesh>
+                </Select>
+
+                <EffectComposer>
+                    <Outline />
+                </EffectComposer>
+            </Selection>
+        )
+    }
+
+    export function App() {
+        return (
+            <Canvas>
+                <Scene />
+            </Canvas>
+        );
+    }
+    ```
+    </Card>
+    <Card title="Angular">
+    ```angular-ts {'1': 21} {'2': 17} {'3': 5}
+    @Component({
+        standalone: true,
+        template: `
+            <ngt-mesh
+                [ngtSelect]="hovered()"
+                (pointerover)="hovered.set(true)"
+                (pointerout)="hovered.set(false)"
+            >
+                <ngt-box-geometry />
+            </ngt-mesh>
+
+            <ngtp-effect-composer>
+                <ngtp-outline />
+            </ngtp-effect-composer>
+        `,
+        schemas: [CUSTOM_ELEMENTS_SCHEMA],
+        hostDirectives: [NgtSelection],
+        imports: [NgtpEffectComposer, NgtpOutline, NgtSelect]
+    })
+    export class SceneGraph {
+        hovered = signal(false);
+    }
+
+    @Component({
+        standalone: true,
+        template: `
+            <ngt-canvas [sceneGraph]="sceneGraph" />
+        `,
+        imports: [NgtCanvas]
+    })
+    export class App {
+        sceneGraph = SceneGraph;
+    }
+    ```
+    </Card>
+</CardGrid>
+
+Let's see `NgtSelection` and `NgtSelect` in action
+
+<iframe src="https://stackblitz.com/edit/stackblitz-starters-dnapx2?ctl=1&embed=1&file=src%2Fscene-graph.ts&hideExplorer=1&hideNavigation=1"></iframe>
+
+## Conclusion
+
+In this article, we've explored the differences between React and Angular in terms of how they handle composition. Angular, while being a more opinionated, still provides a lot of flexibility for composition. The difficult parts are to know what's available and the trade-offs of each approach. I hope that you learned something new and have fun learning it. See y'all in the next blog post.

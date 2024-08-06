@@ -330,6 +330,29 @@ const { Content } = await entry.render();
 		--sl-color-text-accent: var(--primary);
 	}
 
+	.blog-content article.card {
+		@apply flex min-w-0;
+	}
+
+	.blog-content article.card p.title {
+		@apply mb-0 mt-0;
+	}
+
+	.blog-content article.card div.body {
+		@apply flex-1;
+	}
+
+	.blog-content article.card div.body div.expressive-code,
+	.blog-content article.card div.body figure.frame {
+		@apply h-full;
+	}
+
+	.blog-content article.card pre {
+		scrollbar-gutter: stable both-edges;
+		overflow-x: scroll;
+		height: 100%;
+	}
+
 	@keyframes colorAnimation {
 		0% {
 			background-image: linear-gradient(
@@ -388,5 +411,5 @@ const { Content } = await entry.render();
 		}
 	}
 </style>
- }
+}
 

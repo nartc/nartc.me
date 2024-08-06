@@ -8,7 +8,6 @@ import { defineConfig } from "astro/config";
 // https://astro.build/config
 export default defineConfig({
 	integrations: [
-		tailwind(),
 		starlight({
 			title: "Nartc - Personal Blog",
 		}),
@@ -17,6 +16,7 @@ export default defineConfig({
 			plugins: [pluginLineNumbers()],
 		}),
 		mdx(),
+		tailwind(),
 	],
 	site: "https://nartc.me/",
 });
