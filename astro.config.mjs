@@ -12,7 +12,7 @@ export default defineConfig({
 			title: "Nartc - Personal Blog",
 		}),
 		expressiveCode({
-			themes: ["dark-plus", "light-plus"],
+			themes: ["github-dark", "github-light"],
 			plugins: [pluginLineNumbers()],
 			styleOverrides: {
 				codeFontFamily: "'DM Mono'",
