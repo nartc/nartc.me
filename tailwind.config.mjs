@@ -7,6 +7,7 @@ export default {
 		extend: {
 			fontFamily: {
 				sans: ["Inter", ...fontFamily.sans],
+				mono: ["DM Mono", ...fontFamily.mono],
 			},
 			minHeight: {
 				128: "32rem",

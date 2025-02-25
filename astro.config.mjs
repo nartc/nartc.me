@@ -14,6 +14,9 @@ export default defineConfig({
 		expressiveCode({
 			themes: ["dark-plus", "light-plus"],
 			plugins: [pluginLineNumbers()],
+			styleOverrides: {
+				codeFontFamily: "'DM Mono'",
+			},
 		}),
 		mdx(),
 		tailwind(),

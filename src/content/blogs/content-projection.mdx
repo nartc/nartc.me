@@ -1,0 +1,509 @@
+---
+title: Angular Content Projection
+description: Learn about content projection in Angular
+slug: angular-content-projection
+publishedAt: 2025-02-24
+tags: ["Angular"]
+---
+
+import BlogImage from "../../components/BlogImage.astro";
+import ngtPortalDemo from "../../assets/angular-content-projection/ngt-portal-demo.gif";
+
+## Foreword
+
+Content Projection is, well, a pretty basic concept on the surface. Most Angular developers know that you can slap an `<ng-content />` on your template to achieve basic content projection in Angular. While basic, Content Projection is one of those **must have** for composing complex UIs from smaller, reusable components.
+
+Where things get interesting though, and where most tutorials about Content Projection fall short; is how the projected content interacts with Angular's Dependency Injection (DI). This is important if you're building **context-aware** UI components: Components that need to access their parent context like `Tab` in a `TabGroup`, like `Column` / `Row` in a `Table` etc...
+
+To put it frankly, the way `<ng-content />` interacts with Angular's DI is surprisingly _counter-intuitive_. In this blog post, I want to explore this often-overlooked relationship between content projection and DI. The solution we'll arrive at might feel like a _workaround_ but that's just how Angular works today. And we'll need to wait and see how the future looks like.
+
+Hopefully, you'll have a deeper understanding of content projection in Angular.
+
+## The refresher you might not need
+
+At its simplest form, content projection allows you to insert content from a parent component into a designated spot in a child component
+
+```angular-ts
+@Component({
+    selector: 'app-card',
+    template: `
+        <div class="card">
+            <div class="card-body">
+                <ng-content />
+            </div>
+        </div>
+    `
+})
+export class Card {}
+```
+
+and you would use it like this
+
+```angular-html
+<!-- parent.html -->
+<app-card>
+    <h2>Card title</h2>
+    <p>This content will be projected</p>
+</app-card>
+```
+
+### Default content
+
+Recent Angular versions have introduced the ability to provide a default fallback for `<ng-content />` by declaring the default content in between `<ng-content></ng-content>` tag
+
+```angular-ts
+
+@Component({
+    selector: 'app-card',
+    template: `
+        <div class="card">
+            <div class="card-body">
+                <ng-content>
+                    <!-- This will show if nothing is projected -->
+                    <p>No content was provided</p>
+                </ng-content>
+            </div>
+        </div>
+    `
+})
+export class Card {}
+```
+
+### Named content
+
+For more complex components, you might want to project different content into different places using the `select` attribute
+
+```angular-ts
+@Component({
+    selector: 'app-card',
+    template: `
+        <div class="card">
+            <div class="card-header">
+                <ng-content select="[card-title]" />
+            </div>
+            <div class="card-body">
+                <ng-content select="[card-content]" />
+            </div>
+            <div class="card-footer">
+                <ng-content select="[card-footer]" />
+            </div>
+        </div>
+    `
+})
+export class Card {}
+```
+
+and you would use it like this
+
+```angular-html
+<!-- parent.html -->
+<app-card>
+    <h2 card-title>My Card Title</h2>
+    <div card-content>
+        <p>This is the main content of the card.</p>
+    </div>
+    <button card-footer>Read More</button>
+</app-card>
+```
+
+### Aliasing `ngProjectAs`
+
+Considering the following component:
+
+```angular-ts
+@Component({
+    selector: 'app-card',
+    template: `
+        <div class="card">
+            <div class="card-header">
+                <ng-content select="app-card-title" />
+            </div>
+            <div class="card-body">
+                <ng-content select="app-card-body" />
+            </div>
+            <div class="card-footer">
+                <ng-content select="app-card-footer" />
+            </div>
+        </div>
+    `
+})
+export class Card {}
+```
+
+The named slots have changed to `app-card-title`, `app-card-body`, and `app-card-footer`. This means that the consumers would have to use `<app-card-title />` for the `card-header` projection slot and so on.
+
+This, in a sense, allows the consumers to use the `Card` component more correctly but it is also more strict. Sometimes, you might want to render more elements than just `<app-card-title />` for the header slot. This is where `ngProjectAs` comes in
+
+```angular-html
+<!-- parent.html -->
+<app-card>
+    <app-card-title>Card Title</app-card-title>
+</app-card>
+
+<app-card>
+    <ng-container ngProjectAs="app-card-title">
+        <app-card-title>Card Title</app-card-title>
+        <i>some_icon</i>
+    </ng-contaier>
+</app-card>
+```
+
+## `NgTemplateOutlet`
+
+So, that section was probably the content projection that you have in mind but my definition of **Content Projection** also includes `NgTemplateOutlet`, or the almighty `<ng-template />` tag. There is a subtle distinction that you might disagree with me about including `NgTemplateOutlet` under the Content Projection umbrella: `<ng-content />` only projects the content **AFTER** it has been rendered; `<ng-template />` actually renders the content in specific spot on the template. In other words, `<ng-content />` allows you to control the **where**, `<ng-template />` allows you to control the **where and when**.
+
+A common use-case of `<ng-template />` is to provide custom template for list components.
+
+```angular-ts
+@Component({
+    selector: 'app-table',
+    template: `
+        @for (item of items(); track item.id) {
+            @if (itemTmpl(); as itemTmpl) {
+                <ng-container
+                    [ngTemplateOutlet]="itemTmpl"
+                    [ngTemplateOutletContext]="{ $implicit: item }"
+                />
+            } @else {
+                <ng-container
+                    [ngTemplateOutlet]="defaultContent"
+                    [ngTemplateOutletContext]="{ $implicit: item }"
+                />
+            }
+        }
+
+        <ng-template #defaultContent let-item>
+            <p>{{ item.id }}</p>
+        </ng-template>
+    `,
+    imports: [NgTemplateOutlet]
+})
+export class Table {
+    readonly items = input<Item[]>([]);
+
+    protected readonly itemTmpl = contentChild(TemplateRef);
+}
+```
+
+and you would use it like this
+
+```angular-html
+<!-- parent.html -->
+<app-table [items]="employees" />
+<app-table [items]="employees">
+    <ng-template let-employee>
+        <!-- your custom item template goes here -->
+    </ng-template>
+</app-table>
+```
+
+### Conditional content projection
+
+In lieu of content project, `<ng-template />` allows for conditional content projection.
+
+```angular-ts
+@Component({
+    selector: 'app-card',
+    template: `
+        <div class="card">
+            <div class="card-header">
+                <ng-content select="app-card-title" />
+            </div>
+            <div class="card-body">
+                @if (isCompact()) {
+                    <ng-content select="app-card-body" />
+                } @else {
+                    <div class="card-body-fancy">
+                        <ng-content select="app-card-body" />
+                    </div>
+                }
+            </div>
+            <div class="card-footer">
+                <ng-content select="app-card-footer" />
+            </div>
+        </div>
+    `
+})
+export class Card {
+    isCompact = input(true);
+}
+```
+
+In this example, the `Card` component _conditionally_ renders a compact card body or a fancy card body. The problem in this code is that Angular only sees the last `<ng-content select="app-card-body" />` which means that when `isCompact() === true`, `Card` cannot project anything.
+
+The way to solve this is to use `<ng-template />`
+
+```angular-ts
+@Component({
+    selector: 'app-card',
+    template: `
+        <div class="card">
+            <div class="card-header">
+                <ng-content select="app-card-title" />
+            </div>
+            <div class="card-body">
+                @if (isCompact()) {
+                    <ng-container [ngTemplateOutlet]="bodyTmpl" />
+                } @else {
+                    <div class="card-body-fancy">
+                        <ng-container [ngTemplateOutlet]="bodyTmpl" />
+                    </div>
+                }
+            </div>
+            <div class="card-footer">
+                <ng-content select="app-card-footer" />
+            </div>
+        </div>
+
+        <ng-template #bodyTmpl>
+            <ng-content select="app-card-body" />
+        </ng-template>
+    `,
+    imports: [NgTemplateOutlet]
+})
+export class Card {
+    isCompact = input(true);
+}
+```
+
+## The problem with content projection
+
+Now that we've covered the basics, let's address the issue. To quickly point out the problem, let's answer the question: Have you ever tried to abstract `MatTable` or `MatTabGroup` from `@angular/material`? Like, you want to wrap the `<table>` element in some container with some default classes to use across your application? If you haven't tried this before, you'll quickly discover that it just won't work. Here's what I'm referring to
+
+```angular-html
+<!-- table-example.html -->
+<table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+
+    <!--- Note that these columns can be defined in any order.
+            The actual rendered columns are set as a property on the row definition" -->
+
+    <!-- Position Column -->
+    <ng-container matColumnDef="position">
+        <th mat-header-cell *matHeaderCellDef> No. </th>
+        <td mat-cell *matCellDef="let element"> {{element.position}} </td>
+    </ng-container>
+
+    <!-- Name Column -->
+    <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef> Name </th>
+        <td mat-cell *matCellDef="let element"> {{element.name}} </td>
+    </ng-container>
+
+    <!-- Weight Column -->
+    <ng-container matColumnDef="weight">
+        <th mat-header-cell *matHeaderCellDef> Weight </th>
+        <td mat-cell *matCellDef="let element"> {{element.weight}} </td>
+    </ng-container>
+
+    <!-- Symbol Column -->
+    <ng-container matColumnDef="symbol">
+        <th mat-header-cell *matHeaderCellDef> Symbol </th>
+        <td mat-cell *matCellDef="let element"> {{element.symbol}} </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+</table>
+```
+
+Imagine I like to have a `MyTable` component
+
+```angular-ts
+@Component({
+    selector: 'my-table',
+    template: `
+        <div class="my-table-container">
+            <table mat-table [dataSource]="dataSource()" class="mat-elevation-z8">
+                <ng-content />
+            </table>
+        </div>
+    `
+})
+export class MyTable {
+    dataSource = input<any[]>([]);
+}
+```
+
+And I would use it like this
+
+```angular-html
+<!-- table-example.html -->
+<my-table [dataSource]="dataSource">
+
+    <!--- Note that these columns can be defined in any order.
+            The actual rendered columns are set as a property on the row definition" -->
+
+    <!-- Position Column -->
+    <ng-container matColumnDef="position">
+        <th mat-header-cell *matHeaderCellDef> No. </th>
+        <td mat-cell *matCellDef="let element"> {{element.position}} </td>
+    </ng-container>
+
+    <!-- Name Column -->
+    <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef> Name </th>
+        <td mat-cell *matCellDef="let element"> {{element.name}} </td>
+    </ng-container>
+
+    <!-- Weight Column -->
+    <ng-container matColumnDef="weight">
+        <th mat-header-cell *matHeaderCellDef> Weight </th>
+        <td mat-cell *matCellDef="let element"> {{element.weight}} </td>
+    </ng-container>
+
+    <!-- Symbol Column -->
+    <ng-container matColumnDef="symbol">
+        <th mat-header-cell *matHeaderCellDef> Symbol </th>
+        <td mat-cell *matCellDef="let element"> {{element.symbol}} </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+</my-table>
+```
+
+Well, this doesn't work. This is because the content under `my-table` is rendered before `<table mat-table>` in `MyTable` component. In other words, the Material Table columns and cells directives are instantiated before the main table directive.
+
+### Angular Three example
+
+Let's take a look at a realer use-case for this with [Angular Three](https://angularthree-docs-next.netlify.app)
+
+In Angular Three, the most important symbol is the `NGT_STORE` which is an object containing the main building blocks of a `THREE.js` scene: the renderer, the `THREE.Scene`, the current active `THREE.Camera` etc...
+
+All components in Angular Three get access to this store via Dependency Injection `injectStore()`.
+
+Additionally, Angular Three has a concept of portal via `NgtPortal` which will create a _layered_ `NGT_STORE`. This means that components in Angular Three are context-aware; they can access different instances of `NGT_STORE` depending on where they're rendered in the template. If they are used under a `NgtPortal`, they will use that layered `NGT_SRORE` via `injectStore()`. An example would look like this
+
+```angular-html
+<ngt-canvas>
+    <ng-template canvasContent>
+        <!-- this will set the default camera on the root NGT_STORE -->
+        <ngts-perspective-camera [options]="{ makeDefault: true }" />
+
+        <ngt-portal>
+            <ng-template portalContent>
+                <!-- this will set the default camera on the layered NGT_STORE -->
+                <ngts-orthographic-camera [options]="{ makeDefault: true }" />
+            </ng-template>
+        </ngt-portal>
+    </ng-template>
+</ngt-canvas>
+```
+
+So depending on where you render things, the camera they use might be different and this makes the components robust in Angular Three. `NgtPortal` is what makes the following examples work
+
+<BlogImage
+ src={ngtPortalDemo}
+ format="gif"
+ alt="Animated GIF of NgtPortal examples (Sorry for the low quality GIF)"
+/>
+
+### Angular Three and Content Projection
+
+Back to content projection, `NgtPortal` is rather a low-level API where other abstractions makes use of like: `NgtsMeshPortalMaterial` (check out my [MeshPortalMaterial tutorial](https://www.youtube.com/watch?v=HuGLI3wwVl8)) or `NgtsRenderTexture`.
+
+You don't have to understand THREE.js to understand this section. The key point is about how components need to access the correct context through multiple levels of abstractions. The gist is here's how I'd imagine my consumers would use `NgtsRenderTexture`
+
+```angular-html
+<!-- scene-graph.html -->
+
+<!-- they have an object in 3d space -->
+<ngt-mesh>
+    <!-- it is a cube/box -->
+    <ngt-box-geometry />
+    <!-- it has some material (styles) -->
+    <ngt-mesh-standard-material>
+        <!-- material has texture; kinda like CSS background-image -->
+
+        <!-- consumers can render a _offscreen_ Scene -->
+        <!-- then use RenderTexture to project the scene as the material's texture -->
+        <ngts-render-texture>
+            <!-- the offscreen scene -->
+        </ngts-render-texture>
+    </ngt-mesh-standard-material
+</ngt-mesh>
+```
+
+If you look the last example in the GIF above, the letters use `NgtsRenderTexture` to render different scenes as their materials.
+
+With that in mind, you might be able to imagine how `NgtsRenderTexture` template looks like
+
+```angular-html
+<!-- render-texture.html -->
+
+<ngt-portal [container]="virtualScene" [state]="{ events: { compute: compute(), priority: eventPriority() } }">
+    <ng-template portalContent>
+        <!-- something something goes here -->
+        <!-- is it just ng-content or something else? -->
+    </ng-template>
+</ngt-portal>
+```
+
+No, it cannot be just `<ng-content />` because the content would be instantiated with the wrong injection context, disconnected from the `NgtPortal`. As you probably already figure out that abstracting things with basic `<ng-content />` won't work for complex UI components like `MatTabGroup` or `MatTable`. The same thing applies to `NgtsTextureContent`.
+
+This is where `<ng-template />` comes to the rescue (and why I **personally** group `<ng-template />` under content projection). And not just `<ng-template />`, it has to be `<ng-template />` with `[ngTemplateOutletInjector]`.
+
+You see, the way that `<ng-template />` works is that things wrapped with `<ng-template />` get rendered dynamically at runtime with the ability to be rendered with a certain `NodeInjector` (I specifically call out `NodeInjector` here because `EnvironmentInjector` won't be applicable). What I'm pointing at is if we can **forward** the `NodeInjector` from `NgtPortal` all the way down to `NgtsRenderTexture`'s content, then we're good which `[ngTemplateOutletInjector]` allows us to do.
+
+> `ViewContainerRef#createEmbeddedView` also allows passing in an `injector` if you're wondering.
+
+There is one **HUGE** caveat though: everything has to follow the same pattern for it to work. In other words, the `<ng-template />` with `[ngTemplateOutletInjector]` pipeline has to be on every single level of abstractions. In our case, `NgtPortal` has to implement it, `NgtsRenderTexture` also has to implement it.
+
+Let's take a look at a more complete version of `NgtsRenderTexture`
+
+```angular-ts
+@Component({
+    selector: 'ngts-render-texture',
+    template: `
+        <ngt-portal>
+            <!-- NgtPortalContent exposes the injector from `NgtPortal` -->
+            <ng-template portalContent let-injector="injector">
+                <!-- use the injector from Portal to render the RenderTexture's content -->
+                <!-- also pipe through the injector from Portal to the content template so further forwarding can work -->
+                <ng-container
+                    [ngTemplateOutlet]="content()"
+                    [ngTemplateOutletInjector]="injector"
+                    [ngTemplateOutletContext]="{ injector }"
+                />
+            </ng-template>
+        </ngt-portal>
+    `,
+    imports: [NgtPortal, NgTemplateOutlet]
+})
+export class NgtsRenderTexture {
+    // enforcing the consumers to use `NgtsRenderTextureContent`
+    content  = contentChild.required(NgtsRenderTextureContent, { read: TemplateRef });
+}
+```
+
+Now, `NgtsRenderTexture` can be used like this
+
+```angular-html
+<!-- scene-graph.html -->
+<ngt-mesh>
+    <ngt-box-geometry />
+    <ngt-mesh-standard-material>
+        <ngts-render-texture>
+            <ng-template renderTextureContent>
+                <!-- things rendered in here knows about the NgtPortal injector that NgtsRenderTexture abstracts -->
+                <!-- this camera is set as default camera for the NgtPortal store -->
+                <ngts-perspective-camera
+                    [options]="{ manual: true, makeDefault: true, aspect: 1, position: [0, 0, 5] }"
+                />
+                <!-- this color is set as the background for the portal scene -->
+                <ngt-color attach="background" *args="['orange']" />
+            </ng-template>
+        </ngts-render-texture>
+    </ngt-mesh-standard-material
+</ngt-mesh>
+```
+
+## Conclusion
+
+Hopefully, you've gained a deeper understanding of content projection in Angular. We've explored how basic content projection works with `<ng-content />`, how to use named slots, and conditional projection, and most importantly how content projection interacts with Angular's DI.
+
+The challenges we've discussed with complex UI components like Material Table or Angular Three's portals highlight an important limitation in Angular's current content projection model. While the solution using `<ng-template />` with `[ngTemplateOutletInjector]` isn't the most elegant, it provides a workable pattern for creating context-aware, composable components.
+
+The Angular team does recognize that Content Projection needs improvements. As the framework evolves, we may see more intuitive APIs for handling complex content projection scenarios.
+
+Until then, I'll see you around. Thank you for reading!
