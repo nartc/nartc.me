@@ -449,7 +449,37 @@ You see, the way that `<ng-template />` works is that things wrapped with `<ng-t
 
 There is one **HUGE** caveat though: everything has to follow the same pattern for it to work. In other words, the `<ng-template />` with `[ngTemplateOutletInjector]` pipeline has to be on every single level of abstractions. In our case, `NgtPortal` has to implement it, `NgtsRenderTexture` also has to implement it.
 
-Let's take a look at a more complete version of `NgtsRenderTexture`
+Let's take a look at a more complete version of `NgtsRenderTexture` and `NgtPortal`
+
+```angular-ts
+// portal.ts
+@Component({
+    selector: 'ngt-portal',
+    template: `
+        <!-- NgtPortal renders via ViewContainerRef instead -->
+    `,
+})
+export class NgtPortal {
+    private contentRef = contentChild.required(NgtPortalContent, { read: TemplateRef });
+    private anchorRef = contentChild.required(NgtPortalContent, { read: ViewContainerRef });
+
+    private injector = inject(Injector);
+
+    constructor() {
+        effect(() => {
+            // initialize the layered store
+
+            // when ready
+            const view = this.anchorRef().createEmbeddedView(
+                this.contentRef(),
+                // this is the context. Allows `let-injector="injector"` to be available
+                { injector: this.injector },
+                { injector: this.injector }
+            );
+        })
+    }
+}
+```
 
 ```angular-ts
 @Component({
