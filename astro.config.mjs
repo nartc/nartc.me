@@ -16,6 +16,7 @@ export default defineConfig({
 			plugins: [pluginLineNumbers()],
 			styleOverrides: {
 				codeFontFamily: "'DM Mono'",
+				codeFontSize: "1rem",
 			},
 		}),
 		mdx(),
