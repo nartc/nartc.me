@@ -22,9 +22,25 @@ export async function getStaticPaths() {
 }
 const { entry, isProduction } = Astro.props;
 const { Content } = await entry.render();
+
+// Generate a description from the content if not available in frontmatter
+const description =
+	entry.data.description ||
+	`${entry.data.title} - Blog post by Chau Tran published on
+ ${entry.data.publishedAt.toDateString()}`;
+
+// Use the canonical URL for this blog post
+const canonicalURL = new URL(Astro.url.pathname, Astro.site).toString();
 ---
 
-<Layout title={entry.data.title + " | Chau Tran"} isBlog>
+<Layout
+	title={entry.data.title + " | Chau Tran"}
+	isBlog
+	description={description}
+	canonicalURL={canonicalURL}
+	publishedDate={entry.data.publishedAt}
+	tags={entry.data.tags}
+>
 	<a
 		class="home-link inline-block cursor-pointer rounded-full border border-gray-300 px-4 py-2 transition-colors duration-200 ease-in-out hover:text-primary lg:fixed lg:left-1"
 		href="/"

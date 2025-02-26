@@ -1,17 +1,35 @@
 ---
+import { ClientRouter } from "astro:transitions";
 import Avatar from "../components/Avatar.astro";
 import Copyright from "../components/Copyright.astro";
 import Info from "../components/Info.astro";
 import Navigation from "../components/Navigation.astro";
 import Socials from "../components/Socials.astro";
-import { ViewTransitions } from "astro:transitions";
 
 export interface Props {
 	title: string;
 	isBlog?: boolean;
+	description?: string;
+	ogImage?: string;
+	canonicalURL?: string;
+	publishedDate?: Date;
+	tags?: string[];
 }
 
-const { title, isBlog = false } = Astro.props;
+const {
+	title,
+	isBlog = false,
+	description = "Personal blog by Chau Tran",
+	ogImage = "/assets/icons/icon-192x192.png",
+	canonicalURL = Astro.url.href,
+	publishedDate,
+	tags = [],
+} = Astro.props;
+
+const siteUrl = Astro.url.origin;
+const fullImageUrl = ogImage.startsWith("http")
+	? ogImage
+	: `${siteUrl}${ogImage}`;
 ---
 
 <!doctype html>
@@ -22,6 +40,39 @@ const { title, isBlog = false } = Astro.props;
 		<meta name="description" content="Personal blog by Chau Tran" />
 		<link rel="icon" type="image/x-icon" href="/assets/icons/favicon.png" />
 		<meta name="generator" content={Astro.generator} />
+
+		<!-- Canonical URL -->
+		<link rel="canonical" href={canonicalURL} />
+
+		<!-- OpenGraph / Facebook -->
+		<meta property="og:type" content={isBlog ? "article" : "website"} />
+		<meta property="og:url" content={canonicalURL} />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:image" content={fullImageUrl} />
+
+		<!-- Twitter -->
+		<meta property="twitter:card" content="summary_large_image" />
+		<meta property="twitter:url" content={canonicalURL} />
+		<meta property="twitter:title" content={title} />
+		<meta property="twitter:description" content={description} />
+		<meta property="twitter:image" content={fullImageUrl} />
+
+		{/* If it's a blog post, add article specific meta tags */}
+		{
+			isBlog && publishedDate && (
+				<meta
+					property="article:published_time"
+					content={publishedDate.toISOString()}
+				/>
+			)
+		}
+		{
+			isBlog &&
+				tags.length > 0 &&
+				tags.map((tag) => <meta property="article:tag" content={tag} />)
+		}
+
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link
@@ -29,7 +80,7 @@ const { title, isBlog = false } = Astro.props;
 			rel="stylesheet"
 		/>
 		<title>{title}</title>
-		<ViewTransitions />
+		<ClientRouter />
 	</head>
 	<body>
 		<div class="container mx-auto h-full p-8">

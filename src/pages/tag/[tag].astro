@@ -49,6 +49,9 @@ const { blogs } = Astro.props;
 const { tag } = Astro.params as { tag: string };
 ---
 
-<Layout title={tag + "| Chau Tran"}>
+<Layout
+	title={tag + " | Chau Tran"}
+	description={`Articles tagged with ${tag} - Chau Tran's blog`}
+>
 	<BlogList blogs={blogs} />
 </Layout>
