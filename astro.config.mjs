@@ -8,9 +8,7 @@ import { defineConfig } from "astro/config";
 // https://astro.build/config
 export default defineConfig({
 	integrations: [
-		starlight({
-			title: "Nartc - Personal Blog",
-		}),
+		starlight({ title: "Nartc - Personal Blog" }),
 		expressiveCode({
 			themes: ["github-dark", "github-light"],
 			plugins: [pluginLineNumbers()],
