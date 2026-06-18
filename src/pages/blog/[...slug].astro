@@ -1,19 +1,19 @@
 ---
-import { getCollection, type CollectionEntry } from "astro:content";
+import { getCollection, render, type CollectionEntry } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
 
 export async function getStaticPaths() {
 	const blogEntries = await getCollection("blogs");
 
 	const paths: Array<{
-		params: { slug: CollectionEntry<"blogs">["slug"] };
+		params: { slug: CollectionEntry<"blogs">["id"] };
 		props: { entry: CollectionEntry<"blogs">; isProduction: boolean };
 	}> = [];
 
 	for (const blogEntry of blogEntries) {
 		if (blogEntry.data.draft && import.meta.env.PROD) continue;
 		paths.push({
-			params: { slug: blogEntry.slug },
+			params: { slug: blogEntry.id },
 			props: { entry: blogEntry, isProduction: import.meta.env.PROD },
 		});
 	}
@@ -21,7 +21,7 @@ export async function getStaticPaths() {
 	return paths;
 }
 const { entry, isProduction } = Astro.props;
-const { Content } = await entry.render();
+const { Content } = await render(entry);
 
 // Generate a description from the content if not available in frontmatter
 const description =
@@ -49,7 +49,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site).toString();
 	</a>
 	<h1
 		class="mb-6 text-center text-4xl font-bold"
-		transition:name={entry.slug}
+		transition:name={entry.id}
 		transition:animate="initial"
 	>
 		{entry.data.title}
@@ -105,6 +105,8 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site).toString();
 </Layout>
 
 <style is:global>
+	@reference "../../styles/global.css";
+
 	.blog-content h1,
 	.blog-content h2,
 	.blog-content h3,
@@ -142,7 +144,8 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site).toString();
 	}
 
 	.blog-content h6 {
-		@apply flex border-b border-solid border-gray-dark;
+		@apply flex border-b border-solid;
+		border-color: var(--gray-dark);
 	}
 
 	.blog-content h6 > strong {
@@ -163,7 +166,8 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site).toString();
 	}
 
 	.blog-content a:not([class$="-link"]) {
-		@apply cursor-pointer text-primary underline;
+		@apply cursor-pointer underline;
+		color: var(--primary);
 	}
 
 	.blog-content iframe {
@@ -179,7 +183,9 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site).toString();
 	}
 
 	.blog-content blockquote {
-		@apply my-4 border-l-4 border-solid border-gray-dark px-2 py-1 text-gray-medium;
+		@apply my-4 border-l-4 border-solid px-2 py-1;
+		border-color: var(--gray-dark);
+		color: var(--gray-medium);
 	}
 
 	.blog-content ol {
@@ -241,7 +247,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site).toString();
 		@apply mt-0 text-sm italic;
 	}
 
-	@screen md {
+	@media (width >= 48rem) {
 		.blog-content p > img {
 			max-width: 75%;
 		}
@@ -252,7 +258,9 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site).toString();
 	}
 
 	.blog-content :not(pre) > code {
-		@apply break-words rounded bg-code-background tracking-tight text-secondary;
+		@apply break-words rounded tracking-tight;
+		background-color: var(--code-background);
+		color: var(--secondary);
 		padding: 0.15rem;
 	}
 

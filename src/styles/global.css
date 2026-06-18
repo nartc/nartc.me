@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme {
+	--font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+	--font-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+		"Liberation Mono", "Courier New", monospace;
+	--color-primary: var(--primary);
+	--color-secondary: var(--secondary);
+	--color-gray-light: var(--gray-light);
+	--color-gray-medium: var(--gray-medium);
+	--color-gray-dark: var(--gray-dark);
+	--color-text: var(--text-color);
+	--color-code-background: var(--code-background);
+	--shadow-common: var(--shadow);
+	--spacing-128: 32rem;
+	--spacing-228: 57rem;
+}
+
+@media (prefers-color-scheme: light) {
+	:root {
+		--primary: var(--color-rose-600);
+		--secondary: var(--color-sky-600);
+		--background-color: var(--color-white);
+		--text-color: var(--color-black);
+		--gray-light: var(--color-neutral-500);
+		--gray-medium: var(--color-neutral-600);
+		--gray-dark: var(--color-neutral-700);
+		--code-background: var(--color-gray-200);
+		--table-even-row: var(--color-neutral-200);
+		--shadow: var(--shadow-lg);
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--primary: var(--color-sky-400);
+		--secondary: var(--color-rose-400);
+		--background-color: var(--color-neutral-900);
+		--text-color: var(--color-white);
+		--gray-light: var(--color-neutral-500);
+		--gray-medium: var(--color-neutral-400);
+		--gray-dark: var(--color-neutral-300);
+		--code-background: var(--color-gray-800);
+		--table-even-row: var(--color-neutral-700);
+		--shadow: 0 10px 15px -3px rgb(255 255 255 / 0.1),
+			0 4px 6px -2px rgb(255 255 255 / 0.05);
+	}
+}

@@ -11,7 +11,7 @@ export async function GET(context) {
 			.filter((blog) => !blog.data.draft)
 			.map((blog) => ({
 				title: blog.data.title,
-				link: context.url.origin + `/blog/${blog.slug}`,
+				link: context.url.origin + `/blog/${blog.id}`,
 				pubDate: blog.data.publishedAt,
 				description: blog.data.description,
 			})),
