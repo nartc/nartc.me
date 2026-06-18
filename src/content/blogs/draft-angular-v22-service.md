@@ -4,7 +4,6 @@ description: Some thoughts on Angular v22 @Service(), Injectable, root providers
 publishedAt: 2026-06-18
 tags: ["Angular"]
 slug: angular-v22-service
-draft: true
 ---
 
 Angular v22 has a new [`@Service()`](https://angular.dev/api/core/Service) decorator.
