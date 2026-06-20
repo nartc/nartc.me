@@ -20,7 +20,7 @@ helpers, render loop hooks, and a helper package in `angular-three-soba`.
 The nice thing about Angular's [Resource API](https://angular.dev/guide/signals/resource) is that it makes async state boring
 and visible. A consumer can look at a resource and decide what to do for each branch.
 
-```html
+```angular-html
 @if (model.hasValue()) {
     <app-car [model]="model.value()" />
 } @else if (model.isLoading()) {
@@ -41,7 +41,7 @@ static mesh. The Resource API does not prescribe the UI. It exposes the state an
 
 Now put that in Angular Three. A car model usually starts with a path:
 
-```html
+```angular-html
 <app-car path="/models/car.glb" />
 ```
 
@@ -86,7 +86,7 @@ branches.
 
 The pure Resource answer is to push the resource to the consumer and make `app-car` accept the loaded GLTF.
 
-```html
+```angular-html
 @if (car.hasValue()) {
     <app-car [model]="car.value()" />
 } @else if (car.isLoading()) {
@@ -124,7 +124,7 @@ This is where `@boundary` becomes interesting to me. With a boundary, `app-car` 
 path, the loader, the model processing, and the success rendering. But when the Resource errors, `app-car` can choose to let
 that error escape instead of rendering its own error UI.
 
-```html
+```angular-html
 @boundary {
     <app-car path="/models/car.glb" />
 } @error (let error) {
@@ -134,7 +134,7 @@ that error escape instead of rendering its own error UI.
 
 Another consumer can do something else:
 
-```html
+```angular-html
 @boundary {
     <app-car path="/models/car.glb" />
 } @error {
@@ -148,7 +148,7 @@ subtree".
 
 Conceptually, `app-car` becomes something like this:
 
-```html
+```angular-html
 @if (model.hasValue()) {
     <ngt-primitive *args="[model.value().scene]" />
 } @else if (model.isLoading()) {
@@ -169,7 +169,7 @@ one explicit Resource branch is no longer locally recoverable.
 
 In a 3D scene, the difference between local error UI and consumer-owned error UI can change the meaning of the scene.
 
-```html
+```angular-html
 <app-lights />
 <app-camera-rig />
 
@@ -198,7 +198,7 @@ domain** in the same place they define the scene structure.
 
 And because boundaries can be nested, a fallback can have its own fallback:
 
-```html
+```angular-html
 @boundary {
     <app-car path="/models/car.glb" />
 } @error (let error) {
@@ -222,7 +222,7 @@ Suspense back in.
 
 So the conservative version is:
 
-```html
+```angular-html
 @boundary {
     <app-car path="/models/car.glb" />
 } @error (let error) {
@@ -232,7 +232,7 @@ So the conservative version is:
 
 `app-car` still owns its loading UI:
 
-```html
+```angular-html
 @if (model.isLoading()) {
     <app-car-placeholder />
 }
@@ -243,7 +243,7 @@ API for it, and maybe that is okay as loading feels like normal composition terr
 
 For example, `app-car` could expose a loading template:
 
-```html
+```angular-html
 <app-car path="/models/car.glb">
     <ng-template loading>
         <app-wireframe-car />
@@ -253,7 +253,7 @@ For example, `app-car` could expose a loading template:
 
 Or with a structural directive shorthand:
 
-```html
+```angular-html
 <app-car path="/models/car.glb">
     <app-wireframe-car *loading />
 </app-car>
@@ -261,7 +261,7 @@ Or with a structural directive shorthand:
 
 Same for a component-owned Resource error, if the component wants to keep errors local:
 
-```html
+```angular-html
 <app-car path="/models/car.glb">
     <app-car-loading *loading />
     <app-car-error *error="let error" [error]="error" />
@@ -277,7 +277,7 @@ That is different from a loading template.
 
 Could Angular expose a better control-flow primitive for Resource? Maybe. Something like this would be nice to write:
 
-```html
+```angular-html
 @resource (model; let value) {
     <app-car [model]="value" />
 } @loading {
@@ -295,7 +295,7 @@ framework for something `@if` already handles. I am not sure.
 Angular already has `@defer`, and `@defer` has `@loading` and `@error` blocks. That is useful, but it is a different kind of
 boundary.
 
-```html
+```angular-html
 @defer (on viewport) {
     <app-product-scene />
 } @placeholder {
@@ -312,7 +312,7 @@ error should escape to a consumer-owned fallback.
 
 You might compose them:
 
-```html
+```angular-html
 @defer (on viewport) {
     @boundary {
         <app-product-scene />
@@ -342,7 +342,7 @@ Boundary lets the consumer own unrecoverable UI for this usage.
 
 That gives me a version of `app-car` that can stay encapsulated while still letting each scene choose its own failure UI:
 
-```html
+```angular-html
 @boundary {
     <app-car path="/models/car.glb" />
 } @error {
